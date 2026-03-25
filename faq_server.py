@@ -58,7 +58,7 @@ app.add_middleware(
 )
 
 # Path to the interface artifact
-HTML_PATH = r"C:\Users\fen\.gemini\antigravity\brain\2d920890-b0c2-4db9-863c-14fc6b335e09\ecoco_persistent_faq.html"
+HTML_PATH = os.path.join(os.path.dirname(__file__), "ecoco_persistent_faq.html")
 
 @app.get("/", include_in_schema=False)
 async def read_index():
