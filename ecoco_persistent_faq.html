@@ -212,6 +212,58 @@
             a.click(); URL.revokeObjectURL(url);
         };
 
+        const exportPDF = () => {
+            if (faqs.length === 0) { alert('目前沒有資料可以匯出'); return; }
+            const date = new Date().toLocaleDateString('zh-TW');
+            const esc = (s) => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const cards = filteredFaqs.map((f,i) => `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="tags">
+                            <span class="tag tag-theme">主題｜${esc(f.theme)}</span>
+                            ${f.main_item?`<span class="tag tag-item">項目｜${esc(f.main_item)}</span>`:''}
+                            ${f.sub_item?`<span class="tag tag-ver">版本｜${esc(f.sub_item)}</span>`:''}
+                        </div>
+                        <div class="card-meta">建立日：${esc(f.created_date||'')}　第 ${i+1} 筆</div>
+                    </div>
+                    <div class="card-title">${esc(f.detail||'')}</div>
+                    <div class="content-grid">
+                        <div class="content-box">
+                            <div class="content-label v1">V1 標準回覆</div>
+                            <div class="content-text">${esc(f.content_v1||'（尚未輸入）').replace(/\n/g,'<br>')}</div>
+                        </div>
+                        ${f.content_v2?`<div class="content-box">
+                            <div class="content-label v2">V2 備用／英文</div>
+                            <div class="content-text">${esc(f.content_v2).replace(/\n/g,'<br>')}</div>
+                        </div>`:''}
+                    </div>
+                </div>`).join('');
+            const html = `<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><title>ECOCO FAQ 知識庫</title>
+            <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;background:#f8fafc;color:#1e293b;font-size:12px}
+            .page-header{background:#060E9F;color:white;padding:20px 32px;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+            .page-header h1{font-size:20px;font-weight:700;letter-spacing:1px}.page-header .meta{font-size:11px;opacity:.8;text-align:right}
+            .summary{margin:0 32px 20px;padding:10px 16px;background:#eff6ff;border-left:4px solid #060E9F;border-radius:0 8px 8px 0;font-size:12px;color:#1e40af}
+            .cards{padding:0 32px 32px}.card{background:white;border-radius:12px;border:1px solid #e2e8f0;border-left:4px solid #060E9F;margin-bottom:20px;overflow:hidden;page-break-inside:avoid}
+            .card-header{background:#f8fafc;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e2e8f0;flex-wrap:wrap;gap:8px}
+            .tags{display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px}
+            .tag-theme{background:#e0e7ff;color:#3730a3}.tag-item{background:#cffafe;color:#0e7490}.tag-ver{background:#dbeafe;color:#1d4ed8}
+            .card-meta{font-size:10px;color:#94a3b8}.card-title{padding:10px 16px 8px;font-size:14px;font-weight:700;color:#060E9F}
+            .content-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+            .content-box{padding:10px 16px 14px;border-top:1px solid #f1f5f9}.content-box:nth-child(2){border-left:1px solid #f1f5f9}
+            .content-label{font-size:10px;font-weight:800;margin-bottom:6px;padding:2px 8px;border-radius:4px;display:inline-block}
+            .v1{background:#FF5000;color:white}.v2{background:#0076A9;color:white}
+            .content-text{font-size:11px;color:#475569;line-height:1.7}
+            @media print{body{background:white}.page-header,.tag,.content-label{-webkit-print-color-adjust:exact;print-color-adjust:exact}.card{page-break-inside:avoid}}
+            </style></head><body>
+            <div class="page-header"><div><h1>ECOCO FAQ Assistant</h1><div style="font-size:11px;opacity:.7;margin-top:4px">Knowledge Base Management</div></div>
+            <div class="meta">匯出日期：${date}<br>共 ${filteredFaqs.length} 筆問答</div></div>
+            <div class="summary">共匯出 <strong>${filteredFaqs.length}</strong> 筆 FAQ 內容${activeChip?`　篩選條件：${activeChip}`:''}</div>
+            <div class="cards">${cards}</div></body></html>`;
+            const w = window.open('','_blank');
+            w.document.write(html); w.document.close();
+            setTimeout(()=>{ w.focus(); w.print(); }, 600);
+        };
+
         // Chip options from current faqs
         const chipOptions = useMemo(() => {
             if (sidebarMode === 'all' || sidebarMode === 'hot') return [];
@@ -380,6 +432,9 @@
                                 </button>
                                 <button onClick={exportExcel} className="bg-white text-ecoco-deepBlue px-4 py-4 rounded-2xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-all flex items-center space-x-2 whitespace-nowrap" title="匯出 Excel">
                                     <i className="fas fa-file-excel text-green-700"></i><span className="hidden md:inline text-sm font-bold">Excel</span>
+                                </button>
+                                <button onClick={exportPDF} className="bg-white text-ecoco-deepBlue px-4 py-4 rounded-2xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-all flex items-center space-x-2 whitespace-nowrap" title="匯出 PDF">
+                                    <i className="fas fa-file-pdf text-red-600"></i><span className="hidden md:inline text-sm font-bold">PDF</span>
                                 </button>
                                 <button onClick={()=>openModal()} className="bg-ecoco-orange text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-ecoco-orange/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center space-x-2 whitespace-nowrap flex-grow justify-center">
                                     <i className="fas fa-plus-circle"></i><span>新增常見問題</span>
