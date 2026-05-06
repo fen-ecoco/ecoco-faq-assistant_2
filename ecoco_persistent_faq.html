@@ -120,7 +120,7 @@
         const [searchTerm, setSearchTerm] = useState('');
         const [isModalOpen, setIsModalOpen] = useState(false);
         const [editingFaq, setEditingFaq] = useState(null);
-        const [formData, setFormData] = useState({ theme:'', main_item:'', sub_item:'', detail:'', content_v1:'', content_v2:'' });
+        const [formData, setFormData] = useState({ theme:'', main_item:'', sub_item:'', detail:'', content_v1:'', content_v2:'', is_archived: 0 });
         const [guideVisible, setGuideVisible] = useState(true);
 
         // Sidebar
@@ -152,11 +152,25 @@
             try { const r = await fetch(`${API_URL}/faqs/${id}`,{method:'DELETE'}); if(r.ok) fetchFaqs(); else alert("刪除失敗"); } catch { alert("連線失敗"); }
         };
         const openModal = (faq=null) => {
-            if (faq) { setEditingFaq(faq); setFormData({theme:faq.theme||'',main_item:faq.main_item||'',sub_item:faq.sub_item||'',detail:faq.detail||'',content_v1:faq.content_v1||'',content_v2:faq.content_v2||''}); }
-            else { setEditingFaq(null); setFormData({theme:'',main_item:'',sub_item:'',detail:'',content_v1:'',content_v2:''}); }
+            if (faq) { setEditingFaq(faq); setFormData({theme:faq.theme||'',main_item:faq.main_item||'',sub_item:faq.sub_item||'',detail:faq.detail||'',content_v1:faq.content_v1||'',content_v2:faq.content_v2||'',is_archived:faq.is_archived||0}); }
+            else { setEditingFaq(null); setFormData({theme:'',main_item:'',sub_item:'',detail:'',content_v1:'',content_v2:'',is_archived:0}); }
             setIsModalOpen(true);
         };
         const closeModal = () => { setIsModalOpen(false); setEditingFaq(null); };
+
+        const handleArchive = async (faq) => {
+            const newStatus = faq.is_archived === 1 ? 0 : 1;
+            const action = newStatus === 1 ? '封存' : '解除封存';
+            if (!confirm(`確定要${action}這條常見問題嗎？`)) return;
+            try {
+                const r = await fetch(`${API_URL}/faqs/${faq.id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({...faq, is_archived: newStatus})
+                });
+                if (r.ok) fetchFaqs(); else alert("操作失敗");
+            } catch { alert("連線失敗"); }
+        };
 
         const copyToClipboard = (text, faqId, label) => {
             if (!text) return;
@@ -266,10 +280,10 @@
 
         // Chip options from current faqs
         const chipOptions = useMemo(() => {
-            if (sidebarMode === 'all' || sidebarMode === 'hot') return [];
+            if (sidebarMode === 'all' || sidebarMode === 'hot' || sidebarMode === 'archive') return [];
             const field = sidebarMode === 'theme' ? 'theme' : sidebarMode === 'item' ? 'main_item' : 'sub_item';
             const counts = {};
-            faqs.forEach(f => { const v = f[field]; if (v) counts[v] = (counts[v]||0)+1; });
+            faqs.filter(f => f.is_archived !== 1).forEach(f => { const v = f[field]; if (v) counts[v] = (counts[v]||0)+1; });
             return Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([val,cnt])=>({val,cnt}));
         }, [faqs, sidebarMode]);
 
@@ -278,9 +292,14 @@
             let result = faqs.filter(faq =>
                 [faq.theme,faq.content_v1,faq.content_v2,faq.main_item,faq.detail,faq.sub_item].some(f=>(f||'').toLowerCase().includes(searchTerm.toLowerCase()))
             );
-            if (activeChip) {
-                const field = sidebarMode === 'theme' ? 'theme' : sidebarMode === 'item' ? 'main_item' : 'sub_item';
-                result = result.filter(f => f[field] === activeChip);
+            if (sidebarMode === 'archive') {
+                result = result.filter(f => f.is_archived === 1);
+            } else {
+                result = result.filter(f => f.is_archived !== 1);
+                if (activeChip) {
+                    const field = sidebarMode === 'theme' ? 'theme' : sidebarMode === 'item' ? 'main_item' : 'sub_item';
+                    result = result.filter(f => f[field] === activeChip);
+                }
             }
             return result;
         }, [faqs, searchTerm, activeChip, sidebarMode]);
@@ -309,7 +328,7 @@
             setTimeout(()=>{ const el=document.getElementById('faq-'+faqId); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='2px solid #060E9F'; setTimeout(()=>el.style.outline='',2000); } },200);
         };
 
-        const modeLabel = { theme:'主題', item:'項目', version:'版本' };
+        const modeLabel = { theme:'主題', item:'項目', version:'版本', archive:'封存' };
 
         return (
             <div style={{display:'flex', minHeight:'100vh'}}>
@@ -336,6 +355,11 @@
                     <button className={`sb-btn ${sidebarMode==='version'&&!hotOpen&&!smartOpen?'sb-active':''}`} onClick={()=>setSidebarNav('version')}>
                         <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.6"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
                         <span className="sb-label">版本</span>
+                    </button>
+
+                    <button className={`sb-btn ${sidebarMode==='archive'&&!hotOpen&&!smartOpen?'sb-active':''}`} onClick={()=>setSidebarNav('archive')}>
+                        <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.6"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+                        <span className="sb-label">封存</span>
                     </button>
 
                     <div className="sb-divider"></div>
@@ -467,69 +491,73 @@
                             </div>
                         ) : filteredFaqs.length > 0 ? (
                             <div className="space-y-8">
-                                {filteredFaqs.map(faq => (
-                                    <div key={faq.id} id={`faq-${faq.id}`} className="bg-white rounded-2xl shadow-sm border-l-4 border-l-ecoco-deepBlue border border-gray-100 overflow-hidden flex flex-col animate-fade-in group">
+                                {filteredFaqs.map(faq => {
+                                    const isArchived = faq.is_archived === 1;
+                                    return (
+                                    <div key={faq.id} id={`faq-${faq.id}`} className={`bg-white rounded-2xl shadow-sm border-l-4 overflow-hidden flex flex-col animate-fade-in group ${isArchived ? 'border-l-[#999EA2] bg-[#f8f9fa] border border-gray-200' : 'border-l-ecoco-deepBlue border border-gray-100'}`}>
                                         <div className="p-4 md:p-6 border-b border-gray-50 flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0">
                                             <div className="flex flex-wrap gap-2 md:mr-4 text-base">
-                                                <div className="flex items-center bg-indigo-50 text-ecoco-deepBlue font-bold rounded overflow-hidden border border-indigo-100">
-                                                    <span className="bg-indigo-100 px-3 py-1.5">主題</span>
-                                                    <span className="px-3 py-1.5 cursor-pointer hover:bg-indigo-100 transition-colors" onClick={()=>{setSidebarMode('theme');setActiveChip(faq.theme);}}>{faq.theme}</span>
+                                                <div className={`flex items-center font-bold rounded overflow-hidden border ${isArchived ? 'bg-gray-100 text-[#999EA2] border-gray-200' : 'bg-indigo-50 text-ecoco-deepBlue border-indigo-100'}`}>
+                                                    <span className={`px-3 py-1.5 ${isArchived ? 'bg-gray-200 text-[#7a7f85]' : 'bg-indigo-100'}`}>主題</span>
+                                                    <span className={`px-3 py-1.5 cursor-pointer transition-colors ${isArchived ? 'hover:bg-gray-200' : 'hover:bg-indigo-100'}`} onClick={()=>{setSidebarMode('theme');setActiveChip(faq.theme);}}>{faq.theme}</span>
                                                 </div>
-                                                <div className="flex items-center bg-cyan-50 text-ecoco-aqua font-bold rounded overflow-hidden border border-cyan-100">
-                                                    <span className="bg-cyan-100 px-3 py-1.5">項目</span>
-                                                    <span className="px-3 py-1.5 cursor-pointer hover:bg-cyan-100 transition-colors" onClick={()=>{setSidebarMode('item');setActiveChip(faq.main_item);}}>{faq.main_item||'-'}</span>
+                                                <div className={`flex items-center font-bold rounded overflow-hidden border ${isArchived ? 'bg-gray-100 text-[#999EA2] border-gray-200' : 'bg-cyan-50 text-ecoco-aqua border-cyan-100'}`}>
+                                                    <span className={`px-3 py-1.5 ${isArchived ? 'bg-gray-200 text-[#7a7f85]' : 'bg-cyan-100'}`}>項目</span>
+                                                    <span className={`px-3 py-1.5 cursor-pointer transition-colors ${isArchived ? 'hover:bg-gray-200' : 'hover:bg-cyan-100'}`} onClick={()=>{setSidebarMode('item');setActiveChip(faq.main_item);}}>{faq.main_item||'-'}</span>
                                                 </div>
-                                                <div className="flex items-center bg-blue-50 text-ecoco-lightBlue font-bold rounded overflow-hidden border border-blue-100">
-                                                    <span className="bg-blue-100 px-3 py-1.5">版本</span>
-                                                    <span className="px-3 py-1.5 cursor-pointer hover:bg-blue-100 transition-colors" onClick={()=>{setSidebarMode('version');setActiveChip(faq.sub_item);}}>{faq.sub_item||'-'}</span>
+                                                <div className={`flex items-center font-bold rounded overflow-hidden border ${isArchived ? 'bg-gray-100 text-[#999EA2] border-gray-200' : 'bg-blue-50 text-ecoco-lightBlue border-blue-100'}`}>
+                                                    <span className={`px-3 py-1.5 ${isArchived ? 'bg-gray-200 text-[#7a7f85]' : 'bg-blue-100'}`}>版本</span>
+                                                    <span className={`px-3 py-1.5 cursor-pointer transition-colors ${isArchived ? 'hover:bg-gray-200' : 'hover:bg-blue-100'}`} onClick={()=>{setSidebarMode('version');setActiveChip(faq.sub_item);}}>{faq.sub_item||'-'}</span>
                                                 </div>
                                             </div>
-                                            <h3 className="font-bold text-ecoco-deepBlue text-lg flex-grow">{faq.detail}</h3>
+                                            <h3 className={`font-bold text-lg flex-grow ${isArchived ? 'text-[#999EA2]' : 'text-ecoco-deepBlue'}`}>{faq.detail} {isArchived && <span className="text-sm font-normal text-[#999EA2] bg-gray-200 px-2 py-0.5 rounded ml-2">[已封存]</span>}</h3>
                                             <div className="flex items-center space-x-4 w-full md:w-auto justify-between md:justify-end">
                                                 <span className="text-[10px] text-gray-400 font-medium">建立日: {faq.created_date}</span>
                                                 <div className="flex space-x-1">
-                                                    <button onClick={()=>openModal(faq)} className="p-2 text-gray-400 hover:text-ecoco-deepBlue transition-colors"><i className="fas fa-pen"></i></button>
-                                                    <button onClick={()=>handleDelete(faq.id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors"><i className="fas fa-trash-alt"></i></button>
+                                                    <button onClick={()=>openModal(faq)} className={`p-2 transition-colors ${isArchived ? 'text-[#999EA2] hover:text-gray-600' : 'text-gray-400 hover:text-ecoco-deepBlue'}`}><i className="fas fa-pen"></i></button>
+                                                    <button onClick={()=>handleArchive(faq)} className={`p-2 transition-colors ${isArchived ? 'text-[#999EA2] hover:text-gray-600' : 'text-gray-400 hover:text-ecoco-deepBlue'}`} title={isArchived ? '解除封存' : '封存'}><i className={`fas ${isArchived ? 'fa-box-open' : 'fa-box'}`}></i></button>
+                                                    <button onClick={()=>handleDelete(faq.id)} className={`p-2 transition-colors ${isArchived ? 'text-[#999EA2] hover:text-red-500' : 'text-gray-400 hover:text-red-500'}`}><i className="fas fa-trash-alt"></i></button>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 bg-gray-50/30">
-                                            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                                        <div className={`p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 ${isArchived ? 'bg-gray-100/50' : 'bg-gray-50/30'}`}>
+                                            <div className={`rounded-xl border p-4 shadow-sm ${isArchived ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100'}`}>
                                                 <div className="flex justify-between items-center mb-3">
                                                     <div className="flex items-center space-x-2">
-                                                        <span className="bg-ecoco-orange text-white text-[10px] font-black px-1.5 py-0.5 rounded">V1</span>
-                                                        <span className="text-sm font-bold text-ecoco-orange">標準回覆</span>
+                                                        <span className={`text-white text-[10px] font-black px-1.5 py-0.5 rounded ${isArchived ? 'bg-[#999EA2]' : 'bg-ecoco-orange'}`}>V1</span>
+                                                        <span className={`text-sm font-bold ${isArchived ? 'text-[#999EA2]' : 'text-ecoco-orange'}`}>標準回覆</span>
                                                     </div>
-                                                    <button onClick={()=>copyToClipboard(faq.content_v1,faq.id,faq.detail||faq.theme)} className="text-sm bg-gray-50 text-ecoco-deepBlue px-3 py-1.5 rounded border border-gray-100 hover:bg-ecoco-deepBlue hover:text-white transition-all flex items-center space-x-1">
+                                                    <button onClick={()=>copyToClipboard(faq.content_v1,faq.id,faq.detail||faq.theme)} className={`text-sm bg-gray-50 px-3 py-1.5 rounded border border-gray-100 transition-all flex items-center space-x-1 ${isArchived ? 'text-[#999EA2] hover:bg-[#999EA2] hover:text-white' : 'text-ecoco-deepBlue hover:bg-ecoco-deepBlue hover:text-white'}`}>
                                                         <i className="fas fa-copy"></i><span>複製</span>
                                                     </button>
                                                 </div>
-                                                <div className="text-sm text-gray-600 leading-relaxed min-h-[5rem] whitespace-pre-wrap">{faq.content_v1||<span className="italic text-gray-300">尚未輸入內容...</span>}</div>
+                                                <div className={`text-sm leading-relaxed min-h-[5rem] whitespace-pre-wrap ${isArchived ? 'text-[#999EA2]' : 'text-gray-600'}`}>{faq.content_v1||<span className="italic text-gray-300">尚未輸入內容...</span>}</div>
                                             </div>
-                                            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                                            <div className={`rounded-xl border p-4 shadow-sm ${isArchived ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100'}`}>
                                                 <div className="flex justify-between items-center mb-3">
                                                     <div className="flex items-center space-x-2">
-                                                        <span className="bg-ecoco-aqua text-white text-[10px] font-black px-1.5 py-0.5 rounded">V2</span>
-                                                        <span className="text-sm font-bold text-ecoco-aqua">備用/英文</span>
+                                                        <span className={`text-white text-[10px] font-black px-1.5 py-0.5 rounded ${isArchived ? 'bg-[#999EA2]' : 'bg-ecoco-aqua'}`}>V2</span>
+                                                        <span className={`text-sm font-bold ${isArchived ? 'text-[#999EA2]' : 'text-ecoco-aqua'}`}>備用/英文</span>
                                                     </div>
-                                                    <button onClick={()=>copyToClipboard(faq.content_v2,faq.id,faq.detail||faq.theme)} className="text-sm bg-gray-50 text-ecoco-deepBlue px-3 py-1.5 rounded border border-gray-100 hover:bg-ecoco-deepBlue hover:text-white transition-all flex items-center space-x-1">
+                                                    <button onClick={()=>copyToClipboard(faq.content_v2,faq.id,faq.detail||faq.theme)} className={`text-sm bg-gray-50 px-3 py-1.5 rounded border border-gray-100 transition-all flex items-center space-x-1 ${isArchived ? 'text-[#999EA2] hover:bg-[#999EA2] hover:text-white' : 'text-ecoco-deepBlue hover:bg-ecoco-deepBlue hover:text-white'}`}>
                                                         <i className="fas fa-copy"></i><span>複製</span>
                                                     </button>
                                                 </div>
-                                                <div className="text-sm text-gray-600 leading-relaxed min-h-[5rem] whitespace-pre-wrap">{faq.content_v2||<span className="italic text-gray-300">尚未輸入內容...</span>}</div>
+                                                <div className={`text-sm leading-relaxed min-h-[5rem] whitespace-pre-wrap ${isArchived ? 'text-[#999EA2]' : 'text-gray-600'}`}>{faq.content_v2||<span className="italic text-gray-300">尚未輸入內容...</span>}</div>
                                             </div>
                                         </div>
-                                        <div className="px-4 py-3 md:px-6 bg-ecoco-beige/20 border-t border-gray-50 flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">
-                                            <div className="flex items-center space-x-2 text-ecoco-orange">
-                                                <i className="far fa-lightbulb text-sm animate-pulse"></i>
+                                        <div className={`px-4 py-3 md:px-6 border-t flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0 ${isArchived ? 'bg-gray-100/80 border-gray-200' : 'bg-ecoco-beige/20 border-gray-50'}`}>
+                                            <div className={`flex items-center space-x-2 ${isArchived ? 'text-[#999EA2]' : 'text-ecoco-orange'}`}>
+                                                <i className={`far fa-lightbulb text-sm ${isArchived ? '' : 'animate-pulse'}`}></i>
                                                 <span className="text-[11px] font-bold">這筆問答還沒匯入總表嗎?</span>
                                             </div>
-                                            <button onClick={()=>copyRowForSheet(faq)} className="bg-ecoco-deepBlue text-white text-[11px] font-bold px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-black transition-all shadow-md active:scale-95">
+                                            <button onClick={()=>copyRowForSheet(faq)} className={`text-white text-[11px] font-bold px-4 py-2 rounded-lg flex items-center space-x-2 transition-all shadow-md active:scale-95 ${isArchived ? 'bg-[#999EA2] hover:bg-gray-500' : 'bg-ecoco-deepBlue hover:bg-black'}`}>
                                                 <i className="fas fa-file-export"></i><span>複製整列 (Google Sheet 格式)</span>
                                             </button>
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="text-center py-20 bg-white/50 rounded-[3rem] border-4 border-dashed border-ecoco-beige flex flex-col items-center">
