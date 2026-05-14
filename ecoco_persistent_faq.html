@@ -325,7 +325,18 @@
 
         const scrollToFaq = (faqId) => {
             closePanel();
-            setTimeout(()=>{ const el=document.getElementById('faq-'+faqId); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='2px solid #060E9F'; setTimeout(()=>el.style.outline='',2000); } },200);
+            setSidebarNav('all');
+            setSearchTerm('');
+            setTimeout(()=>{ 
+                const el=document.getElementById('faq-'+faqId); 
+                if(el){ 
+                    el.scrollIntoView({behavior:'smooth',block:'center'}); 
+                    el.style.outline='2px solid #060E9F'; 
+                    setTimeout(()=>el.style.outline='',2000); 
+                } else {
+                    alert('找不到對應的問題，可能已被刪除');
+                }
+            }, 300);
         };
 
         const modeLabel = { theme:'主題', item:'項目', version:'版本', archive:'封存' };
@@ -624,7 +635,14 @@
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2"><path d="M12 2c0 6-6 8-6 14a6 6 0 0012 0c0-2-1-3.5-2-5-1 2-2 3-3 3 1-3 1-7-1-12z"/></svg>
                             熱門問題排行
                         </span>
-                        <button className="panel-close" onClick={closePanel}>✕</button>
+                        <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
+                            {hotList.length > 0 && (
+                                <button onClick={()=>{ if(confirm('確定要清除所有熱門紀錄嗎？')) { setCopyCounts({}); localStorage.removeItem(COPY_KEY); } }} style={{fontSize:11, background:'rgba(255,255,255,0.2)', border:'none', color:'#fff', padding:'4px 8px', borderRadius:6, cursor:'pointer'}} title="清除所有熱門排行紀錄">
+                                    一鍵清除
+                                </button>
+                            )}
+                            <button className="panel-close" onClick={closePanel}>✕</button>
+                        </div>
                     </div>
                     <div style={{flex:1,overflowY:'auto',padding:'12px 14px'}}>
                         {hotList.length===0 ? (
