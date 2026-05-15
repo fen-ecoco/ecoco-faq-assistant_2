@@ -82,6 +82,19 @@
         .panel-header { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; }
         .panel-close { background: rgba(255,255,255,0.15); border: none; color: #fff; width: 26px; height: 26px; border-radius: 7px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
         .panel-close:hover { background: rgba(255,255,255,0.25); }
+
+        /* Official FAQ Panel */
+        #official-panel { position: fixed; top: 0; left: 72px; width: 380px; height: 100vh; background: #fff; border-right: 1px solid #e2e8f0; z-index: 200; display: none; flex-direction: column; box-shadow: 6px 0 24px rgba(0,0,0,0.1); }
+        #official-panel.open { display: flex; }
+        .sb-btn.sb-official svg { stroke: #f9a8d4; }
+        .sb-btn.sb-official .sb-label { color: #f9a8d4; }
+        .sb-btn.sb-official.sb-active { background: rgba(249,168,212,0.15); }
+        .official-result { border: 1px solid #fce7f3; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: #fff; transition: border-color 0.15s, background 0.15s; }
+        .official-result:hover { border-color: #ec4899; background: #fdf2f8; }
+        .official-q { font-size: 12px; font-weight: 600; color: #1e293b; margin-bottom: 5px; }
+        .official-a { font-size: 11px; color: #64748b; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .official-copy-btn { margin-top: 6px; font-size: 11px; padding: 3px 9px; border-radius: 6px; border: 1px solid #fce7f3; background: #fdf2f8; color: #be185d; cursor: pointer; transition: all 0.15s; }
+        .official-copy-btn:hover { background: #ec4899; color: #fff; border-color: #ec4899; }
     </style>
 </head>
 <body>
@@ -120,20 +133,40 @@
         const [searchTerm, setSearchTerm] = useState('');
         const [isModalOpen, setIsModalOpen] = useState(false);
         const [editingFaq, setEditingFaq] = useState(null);
-        const [formData, setFormData] = useState({ theme:'', main_item:'', sub_item:'', detail:'', content_v1:'', content_v2:'', is_archived: 0 });
+        const [formData, setFormData] = useState({ theme:'', main_item:'', sub_item:'', detail:'', content_v1:'', content_v2:'', images:'', is_archived: 0 });
         const [guideVisible, setGuideVisible] = useState(true);
 
         // Sidebar
-        const [sidebarMode, setSidebarMode] = useState('all'); // all | theme | item | version
+        const [sidebarMode, setSidebarMode] = useState('all');
         const [activeChip, setActiveChip] = useState(null);
         const [hotOpen, setHotOpen] = useState(false);
         const [smartOpen, setSmartOpen] = useState(false);
+        const [officialOpen, setOfficialOpen] = useState(false);
         const [copyCounts, setCopyCounts] = useState(getCopyCounts());
         const [smartQuery, setSmartQuery] = useState('');
         const [smartResults, setSmartResults] = useState([]);
+        const [gsUrl, setGsUrl] = useState(() => localStorage.getItem('ecoco_gs_url') || '');
+        const [gsData, setGsData] = useState([]);
+        const [gsLoading, setGsLoading] = useState(false);
+        const [officialQuery, setOfficialQuery] = useState('');
+        const [officialResults, setOfficialResults] = useState([]);
         const smartRef = useRef(null);
+        const [pendingScrollId, setPendingScrollId] = useState(null);
 
         useEffect(() => { checkConnection(); fetchFaqs(); const iv = setInterval(checkConnection, 5000); return () => clearInterval(iv); }, []);
+
+        // Fix scroll: watch pendingScrollId and scroll after render
+        useEffect(() => {
+            if (pendingScrollId === null) return;
+            const el = document.getElementById('faq-' + pendingScrollId);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.style.outline = '3px solid #060E9F';
+                el.style.transition = 'outline 0.3s';
+                setTimeout(() => { el.style.outline = ''; }, 2200);
+                setPendingScrollId(null);
+            }
+        }, [pendingScrollId, faqs, sidebarMode, searchTerm]);
 
         const checkConnection = async () => { try { const r = await fetch(`${API_URL}/faqs`); setConnected(r.ok); } catch { setConnected(false); } };
         const fetchFaqs = async () => { setLoading(true); try { const r = await fetch(`${API_URL}/faqs`); if (r.ok) { const d = await r.json(); setFaqs(Array.isArray(d)?d:[]); } } catch(e){} finally { setLoading(false); } };
@@ -152,8 +185,8 @@
             try { const r = await fetch(`${API_URL}/faqs/${id}`,{method:'DELETE'}); if(r.ok) fetchFaqs(); else alert("刪除失敗"); } catch { alert("連線失敗"); }
         };
         const openModal = (faq=null) => {
-            if (faq) { setEditingFaq(faq); setFormData({theme:faq.theme||'',main_item:faq.main_item||'',sub_item:faq.sub_item||'',detail:faq.detail||'',content_v1:faq.content_v1||'',content_v2:faq.content_v2||'',is_archived:faq.is_archived||0}); }
-            else { setEditingFaq(null); setFormData({theme:'',main_item:'',sub_item:'',detail:'',content_v1:'',content_v2:'',is_archived:0}); }
+            if (faq) { setEditingFaq(faq); setFormData({theme:faq.theme||'',main_item:faq.main_item||'',sub_item:faq.sub_item||'',detail:faq.detail||'',content_v1:faq.content_v1||'',content_v2:faq.content_v2||'',images:faq.images||'',is_archived:faq.is_archived||0}); }
+            else { setEditingFaq(null); setFormData({theme:'',main_item:'',sub_item:'',detail:'',content_v1:'',content_v2:'',images:'',is_archived:0}); }
             setIsModalOpen(true);
         };
         const closeModal = () => { setIsModalOpen(false); setEditingFaq(null); };
@@ -317,26 +350,57 @@
 
         const setSidebarNav = (mode) => {
             setSidebarMode(mode); setActiveChip(null);
-            setHotOpen(false); setSmartOpen(false);
+            setHotOpen(false); setSmartOpen(false); setOfficialOpen(false);
         };
-        const toggleHot = () => { setSmartOpen(false); setHotOpen(v=>!v); };
-        const toggleSmart = () => { setHotOpen(false); setSmartOpen(v=>!v); setTimeout(()=>smartRef.current&&smartRef.current.focus(),100); };
-        const closePanel = () => { setHotOpen(false); setSmartOpen(false); };
+        const toggleHot = () => { setSmartOpen(false); setOfficialOpen(false); setHotOpen(v=>!v); };
+        const toggleSmart = () => { setHotOpen(false); setOfficialOpen(false); setSmartOpen(v=>!v); setTimeout(()=>smartRef.current&&smartRef.current.focus(),100); };
+        const toggleOfficial = () => { setHotOpen(false); setSmartOpen(false); setOfficialOpen(v=>!v); };
+        const closePanel = () => { setHotOpen(false); setSmartOpen(false); setOfficialOpen(false); };
 
         const scrollToFaq = (faqId) => {
             closePanel();
-            setSidebarNav('all');
+            setSidebarMode('all');
+            setActiveChip(null);
             setSearchTerm('');
-            setTimeout(()=>{ 
-                const el=document.getElementById('faq-'+faqId); 
-                if(el){ 
-                    el.scrollIntoView({behavior:'smooth',block:'center'}); 
-                    el.style.outline='2px solid #060E9F'; 
-                    setTimeout(()=>el.style.outline='',2000); 
-                } else {
-                    alert('找不到對應的問題，可能已被刪除');
-                }
-            }, 300);
+            setPendingScrollId(faqId);
+        };
+
+        // Google Sheet CSV loader
+        const loadGsData = async (url) => {
+            if (!url.trim()) return;
+            setGsLoading(true);
+            try {
+                const res = await fetch(url);
+                const text = await res.text();
+                const lines = text.split('\n').filter(l => l.trim());
+                const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g,'').trim());
+                const rows = lines.slice(1).map(line => {
+                    const vals = [];
+                    let inQ = false, cur = '';
+                    for (let c of line) {
+                        if (c === '"') { inQ = !inQ; }
+                        else if (c === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+                        else { cur += c; }
+                    }
+                    vals.push(cur.trim());
+                    const obj = {};
+                    headers.forEach((h,i) => { obj[h] = (vals[i]||'').replace(/^"|"$/g,''); });
+                    return obj;
+                });
+                setGsData(rows);
+                localStorage.setItem('ecoco_gs_url', url);
+            } catch(e) { alert('載入失敗，請確認網址格式正確（需為公開的 CSV 網址）'); }
+            finally { setGsLoading(false); }
+        };
+
+        const runOfficialSearch = (q) => {
+            setOfficialQuery(q);
+            if (!q.trim() || gsData.length === 0) { setOfficialResults([]); return; }
+            const qLow = q.toLowerCase();
+            const results = gsData.filter(row => {
+                return Object.values(row).some(v => (v||'').toLowerCase().includes(qLow));
+            }).slice(0, 10);
+            setOfficialResults(results);
         };
 
         const modeLabel = { theme:'主題', item:'項目', version:'版本', archive:'封存' };
@@ -386,6 +450,14 @@
                         <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.6"><path d="M12 2c0 6-6 8-6 14a6 6 0 0012 0c0-2-1-3.5-2-5-1 2-2 3-3 3 1-3 1-7-1-12z"/></svg>
                         <span className="sb-label">熱門</span>
                         {hotList.length>0 && <span className="sb-badge">{hotList.length>99?'99+':hotList.length}</span>}
+                    </button>
+
+                    <div className="sb-divider"></div>
+
+                    {/* Official FAQ */}
+                    <button className={`sb-btn sb-official ${officialOpen?'sb-active':''}`} onClick={toggleOfficial}>
+                        <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.6"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><path d="M2 12h2M20 12h2M12 2v2M12 20v2"/></svg>
+                        <span className="sb-label">官網FAQ</span>
                     </button>
                 </nav>
 
@@ -608,6 +680,17 @@
                                             <textarea rows="6" placeholder="請輸入備用語句或英文翻譯版..." className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-ecoco-aqua focus:bg-white outline-none transition-all resize-none shadow-inner" value={formData.content_v2} onChange={(e)=>setFormData({...formData,content_v2:e.target.value})}></textarea>
                                         </div>
                                     </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-purple-600 flex items-center gap-2"><i className="fas fa-photo-video"></i>圖片 / 影片連結 (可選)</label>
+                                        <input type="text" placeholder="例: https://imgur.com/xxx.png 或 https://youtu.be/xxx（多個連結請用空格分隔）" className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-transparent focus:border-purple-400 focus:bg-white outline-none transition-all" value={formData.images} onChange={(e)=>setFormData({...formData,images:e.target.value})} />
+                                        {formData.images && (
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {formData.images.split(' ').filter(Boolean).map((url,i) => (
+                                                    <a key={i} href={url} target="_blank" rel="noreferrer" className="text-xs text-purple-600 underline bg-purple-50 px-2 py-1 rounded">{url.length>40?url.slice(0,40)+'...':url}</a>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="flex justify-end space-x-6 pt-4">
                                         <button type="button" onClick={closeModal} className="px-10 py-4 border-2 border-gray-100 rounded-2xl font-bold text-gray-400 hover:bg-gray-50 transition-colors">取消</button>
                                         <button type="submit" className="px-12 py-4 bg-ecoco-orange text-white rounded-2xl font-bold shadow-xl shadow-ecoco-orange/30 hover:scale-[1.02] active:scale-95 transition-all">確認儲存</button>
@@ -626,7 +709,7 @@
                 </div>
 
                 {/* ── Overlay ── */}
-                {(hotOpen||smartOpen) && <div id="side-overlay" className="open" onClick={closePanel}></div>}
+                {(hotOpen||smartOpen||officialOpen) && <div id="side-overlay" className="open" onClick={closePanel}></div>}
 
                 {/* ── Hot Panel ── */}
                 <div id="hot-panel" className={hotOpen?'open':''}>
@@ -664,6 +747,7 @@
                 </div>
 
                 {/* ── Smart Match Panel ── */}
+                {/* ── Smart Match Panel ── */}
                 <div id="smart-panel" className={smartOpen?'open':''}>
                     <div className="panel-header" style={{background:'#064e3b'}}>
                         <span style={{color:'#fff',fontSize:14,fontWeight:600,display:'flex',alignItems:'center',gap:8}}>
@@ -687,6 +771,23 @@
                         {smartQuery && (
                             <button onClick={()=>{setSmartQuery('');setSmartResults([]);}} style={{marginTop:6,fontSize:11,color:'#94a3b8',background:'none',border:'none',cursor:'pointer',padding:0}}>✕ 清除</button>
                         )}
+                        <div style={{marginTop:10,padding:'8px 10px',background:'#f0fdf4',borderRadius:8,border:'1px solid #d1fae5'}}>
+                            <p style={{fontSize:11,color:'#059669',fontWeight:600,marginBottom:4}}>📄 也搜尋 Google Sheet （可選）</p>
+                            <div style={{display:'flex',gap:4}}>
+                                <input
+                                    type="text"
+                                    placeholder="貼上 Google Sheet 公開 CSV 網址..."
+                                    style={{flex:1,padding:'5px 8px',borderRadius:6,border:'1px solid #bbf7d0',fontSize:11,outline:'none',background:'#fff'}}
+                                    value={gsUrl}
+                                    onChange={(e)=>setGsUrl(e.target.value)}
+                                    onKeyDown={(e)=>{ if(e.key==='Enter') loadGsData(gsUrl); }}
+                                />
+                                <button onClick={()=>loadGsData(gsUrl)} disabled={gsLoading} style={{padding:'5px 10px',borderRadius:6,background:'#059669',color:'#fff',border:'none',fontSize:11,cursor:'pointer',whiteSpace:'nowrap'}}>
+                                    {gsLoading?'載入中...':'載入'}
+                                </button>
+                            </div>
+                            {gsData.length>0 && <p style={{fontSize:10,color:'#16a34a',marginTop:4}}>✅ 已載入 {gsData.length} 筆 Sheet 資料</p>}
+                        </div>
                     </div>
                     <div style={{flex:1,overflowY:'auto',padding:'12px 14px'}}>
                         {!smartQuery.trim() ? (
@@ -694,37 +795,126 @@
                                 <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" style={{margin:'0 auto 10px',display:'block'}}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
                                 輸入用戶說的話，<br/>系統自動找最相關問答
                             </div>
-                        ) : smartResults.length === 0 ? (
+                        ) : smartResults.length === 0 && gsData.filter(r=>Object.values(r).some(v=>(v||'').toLowerCase().includes(smartQuery.toLowerCase()))).length===0 ? (
                             <div style={{textAlign:'center',padding:'30px 16px',color:'#94a3b8',fontSize:12}}>
                                 <p>找不到相符的問答</p>
                                 <p style={{fontSize:11,marginTop:4}}>試試不同的關鍵字</p>
                             </div>
                         ) : (
                             <>
-                                <p style={{fontSize:11,color:'#94a3b8',marginBottom:10}}>找到 {smartResults.length} 筆相關結果</p>
-                                {smartResults.map(({faq,score})=>(
-                                    <div key={faq.id} className="match-card">
-                                        <span className="match-score">相關度 {Math.min(100,score*10)}%</span>
-                                        <div className="match-title">{faq.detail || faq.theme}</div>
-                                        <div style={{fontSize:11,color:'#94a3b8',marginBottom:4}}>
-                                            {[faq.theme,faq.main_item,faq.sub_item].filter(Boolean).join(' › ')}
+                                {smartResults.length > 0 && (
+                                    <>
+                                        <p style={{fontSize:11,color:'#059669',fontWeight:600,marginBottom:6}}>📚 知識庫筆數: {smartResults.length} 筆</p>
+                                        {smartResults.map(({faq,score})=>(
+                                            <div key={faq.id} className="match-card">
+                                                <span className="match-score">相關度 {Math.min(100,score*10)}%</span>
+                                                <div className="match-title">{faq.detail || faq.theme}</div>
+                                                <div style={{fontSize:11,color:'#94a3b8',marginBottom:4}}>
+                                                    {[faq.theme,faq.main_item,faq.sub_item].filter(Boolean).join(' › ')}
+                                                </div>
+                                                <div className="match-preview">{faq.content_v1||'（尚無內容）'}</div>
+                                                <div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>
+                                                    <button className="match-copy-btn" onClick={()=>copyToClipboard(faq.content_v1,faq.id,faq.detail||faq.theme)}>複製 V1 標準回覆</button>
+                                                    {faq.content_v2 && (
+                                                        <button className="match-copy-btn" onClick={()=>copyToClipboard(faq.content_v2,faq.id,faq.detail||faq.theme)}>複製 V2</button>
+                                                    )}
+                                                    <button className="match-copy-btn" style={{borderColor:'#c7d2fe',background:'#f5f3ff',color:'#3730a3'}} onClick={()=>scrollToFaq(faq.id)}>跳至卡片</button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </>
+                                )}
+                                {gsData.length > 0 && (() => {
+                                    const qLow = smartQuery.toLowerCase();
+                                    const gsResults = gsData.filter(r=>Object.values(r).some(v=>(v||'').toLowerCase().includes(qLow))).slice(0,5);
+                                    const cols = gsResults.length>0?Object.keys(gsResults[0]):[];
+                                    return gsResults.length>0?(
+                                        <>
+                                            <p style={{fontSize:11,color:'#be185d',fontWeight:600,marginBottom:6,marginTop:smartResults.length>0?14:0}}>🌐 Google Sheet 結果: {gsResults.length} 筆</p>
+                                            {gsResults.map((row,i)=>(
+                                                <div key={i} className="official-result">
+                                                    <div className="official-q">{row[cols[0]]||'—'}</div>
+                                                    <div className="official-a">{cols.slice(1).map(c=>row[c]).filter(Boolean).join(' | ')}</div>
+                                                    <button className="official-copy-btn" onClick={()=>navigator.clipboard.writeText(Object.values(row).filter(Boolean).join('\n')).then(()=>alert('已複製'))}>複製內容</button>
+                                                </div>
+                                            ))}
+                                        </>
+                                    ):null;
+                                })()}
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                {/* ── Official FAQ Panel ── */}
+                <div id="official-panel" className={officialOpen?'open':''}>
+                    <div className="panel-header" style={{background:'#831843'}}>
+                        <span style={{color:'#fff',fontSize:14,fontWeight:600,display:'flex',alignItems:'center',gap:8}}>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f9a8d4" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                            官網 FAQ 搜尋
+                        </span>
+                        <button className="panel-close" onClick={closePanel}>✕</button>
+                    </div>
+                    <div style={{padding:'12px 14px',borderBottom:'1px solid #fce7f3'}}>
+                        <p style={{fontSize:11,color:'#9d174d',marginBottom:8,lineHeight:1.5}}>
+                            請將 ECOCO_FAQ.csv / ECOCO_使用教學.csv 上傳至 Google Sheets 並公開為 CSV，再貼上連結。
+                        </p>
+                        <div style={{display:'flex',gap:4,marginBottom:6}}>
+                            <input
+                                type="text"
+                                placeholder="貼上 Google Sheet CSV 公開網址..."
+                                style={{flex:1,padding:'7px 10px',borderRadius:8,border:'1.5px solid #fce7f3',fontSize:12,outline:'none',background:'#fff',boxSizing:'border-box'}}
+                                value={gsUrl}
+                                onChange={(e)=>setGsUrl(e.target.value)}
+                                onKeyDown={(e)=>{ if(e.key==='Enter') loadGsData(gsUrl); }}
+                            />
+                            <button onClick={()=>loadGsData(gsUrl)} disabled={gsLoading} style={{padding:'7px 12px',borderRadius:8,background:'#ec4899',color:'#fff',border:'none',fontSize:12,cursor:'pointer',whiteSpace:'nowrap'}}>
+                                {gsLoading?'載入中...':'載入'}
+                            </button>
+                        </div>
+                        {gsData.length>0 && <p style={{fontSize:11,color:'#be185d',marginBottom:8}}>✅ 已載入 {gsData.length} 筆資料</p>}
+                        <input
+                            type="text"
+                            placeholder="輸入問題搜尋..."
+                            style={{width:'100%',padding:'8px 12px',borderRadius:8,border:'1.5px solid #fce7f3',fontSize:13,outline:'none',background:'#fdf2f8',boxSizing:'border-box'}}
+                            value={officialQuery}
+                            onChange={(e)=>runOfficialSearch(e.target.value)}
+                        />
+                        {officialQuery && (
+                            <button onClick={()=>{setOfficialQuery('');setOfficialResults([]);}} style={{marginTop:5,fontSize:11,color:'#94a3b8',background:'none',border:'none',cursor:'pointer',padding:0}}>✕ 清除</button>
+                        )}
+                    </div>
+                    <div style={{flex:1,overflowY:'auto',padding:'12px 14px'}}>
+                        {gsData.length === 0 ? (
+                            <div style={{textAlign:'center',padding:'36px 16px',color:'#94a3b8',fontSize:12}}>
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fce7f3" strokeWidth="1.5" style={{margin:'0 auto 10px',display:'block'}}><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                                <p>請先載入 Google Sheet 資料</p>
+                                <p style={{fontSize:10,marginTop:5,color:'#cbd5e1'}}>請上方貼上 CSV 公開網址並點擊「載入」</p>
+                            </div>
+                        ) : !officialQuery.trim() ? (
+                            <div style={{textAlign:'center',padding:'24px 16px',color:'#94a3b8',fontSize:12}}>
+                                <p>🔍 共 {gsData.length} 筆資料已載入</p>
+                                <p style={{fontSize:11,marginTop:4}}>請輸入搜尋關鍵字</p>
+                            </div>
+                        ) : officialResults.length === 0 ? (
+                            <div style={{textAlign:'center',padding:'24px 16px',color:'#94a3b8',fontSize:12}}>
+                                <p>找不到「{officialQuery}」的相關資料</p>
+                            </div>
+                        ) : (
+                            <>
+                                <p style={{fontSize:11,color:'#be185d',marginBottom:8}}>找到 {officialResults.length} 筆相關問答</p>
+                                {officialResults.map((row,i) => {
+                                    const cols = Object.keys(row);
+                                    const question = row[cols[0]] || '';
+                                    const answer = cols.slice(1).map(c=>row[c]).filter(Boolean).join(' ');
+                                    return (
+                                        <div key={i} className="official-result">
+                                            <div className="official-q">{question}</div>
+                                            <div className="official-a">{answer || '（無内容）'}</div>
+                                            <button className="official-copy-btn" onClick={()=>navigator.clipboard.writeText(answer||question).then(()=>alert('已複製'))}>複製內容</button>
                                         </div>
-                                        <div className="match-preview">{faq.content_v1||'（尚無內容）'}</div>
-                                        <div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>
-                                            <button className="match-copy-btn" onClick={()=>copyToClipboard(faq.content_v1,faq.id,faq.detail||faq.theme)}>
-                                                複製 V1 標準回覆
-                                            </button>
-                                            {faq.content_v2 && (
-                                                <button className="match-copy-btn" onClick={()=>copyToClipboard(faq.content_v2,faq.id,faq.detail||faq.theme)}>
-                                                    複製 V2
-                                                </button>
-                                            )}
-                                            <button className="match-copy-btn" style={{borderColor:'#c7d2fe',background:'#f5f3ff',color:'#3730a3'}} onClick={()=>scrollToFaq(faq.id)}>
-                                                跳至卡片
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </>
                         )}
                     </div>
