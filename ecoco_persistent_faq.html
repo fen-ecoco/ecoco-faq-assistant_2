@@ -926,11 +926,25 @@
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-3">
                                             <label className="text-[16px] md:text-[18px] font-bold text-ecoco-orange flex items-center">內容版本1 (標準官方回覆)</label>
-                                            <textarea rows="6" placeholder="請輸入適合直接貼給用戶的標準回覆..." className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-ecoco-orange focus:bg-white outline-none transition-all resize-none shadow-inner text-sm md:text-base" value={formData.content_v1} onChange={(e)=>setFormData({...formData,content_v1:e.target.value})}></textarea>
+                                            <div className="relative">
+                                                <textarea rows="6" placeholder="請輸入適合直接貼給用戶的標準回覆..." className="w-full px-5 py-4 pr-10 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-ecoco-orange focus:bg-white outline-none transition-all resize-none shadow-inner text-sm md:text-base" value={formData.content_v1} onChange={(e)=>setFormData({...formData,content_v1:e.target.value})}></textarea>
+                                                {formData.content_v1 && (
+                                                    <button type="button" onClick={() => setFormData({...formData, content_v1: ''})} className="absolute right-3 top-3 text-gray-400 hover:text-red-500 w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors">
+                                                        <i className="fas fa-times"></i>
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="space-y-3">
                                             <label className="text-[16px] md:text-[18px] font-bold text-ecoco-aqua flex items-center">內容版本2 (英文版 / 備註補充)</label>
-                                            <textarea rows="6" placeholder="請輸入備用語句或英文翻譯版..." className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-ecoco-aqua focus:bg-white outline-none transition-all resize-none shadow-inner text-sm md:text-base" value={formData.content_v2} onChange={(e)=>setFormData({...formData,content_v2:e.target.value})}></textarea>
+                                            <div className="relative">
+                                                <textarea rows="6" placeholder="請輸入備用語句或英文翻譯版..." className="w-full px-5 py-4 pr-10 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-ecoco-aqua focus:bg-white outline-none transition-all resize-none shadow-inner text-sm md:text-base" value={formData.content_v2} onChange={(e)=>setFormData({...formData,content_v2:e.target.value})}></textarea>
+                                                {formData.content_v2 && (
+                                                    <button type="button" onClick={() => setFormData({...formData, content_v2: ''})} className="absolute right-3 top-3 text-gray-400 hover:text-red-500 w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors">
+                                                        <i className="fas fa-times"></i>
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="space-y-2">
