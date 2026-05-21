@@ -58,15 +58,9 @@ def init_db():
                 note TEXT
             )
         """)
-        # Try to add columns if missing
-        try:
-            cursor.execute("ALTER TABLE faqs ADD COLUMN is_archived INTEGER DEFAULT 0")
-        except Exception:
-            pass
-        try:
-            cursor.execute("ALTER TABLE faqs ADD COLUMN note TEXT")
-        except Exception:
-            pass
+        # Add missing columns safely (IF NOT EXISTS avoids transaction abort in psycopg2)
+        cursor.execute("ALTER TABLE faqs ADD COLUMN IF NOT EXISTS is_archived INTEGER DEFAULT 0")
+        cursor.execute("ALTER TABLE faqs ADD COLUMN IF NOT EXISTS note TEXT")
         conn.commit()
         cursor.close()
         conn.close()
@@ -178,7 +172,7 @@ async def create_faq(faq: FAQ):
         new_id = cursor.lastrowid
         conn.commit()
         conn.close()
-        
+
     return {**faq.dict(), "id": new_id, "created_date": now, "modified_date": now}
 
 @app.put("/faqs/{faq_id}", response_model=FAQ)
