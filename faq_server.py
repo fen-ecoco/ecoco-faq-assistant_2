@@ -54,12 +54,17 @@ def init_db():
                 created_date TEXT,
                 modified_date TEXT,
                 images TEXT,
-                is_archived INTEGER DEFAULT 0
+                is_archived INTEGER DEFAULT 0,
+                note TEXT
             )
         """)
-        # Try to add is_archived if missing
+        # Try to add columns if missing
         try:
             cursor.execute("ALTER TABLE faqs ADD COLUMN is_archived INTEGER DEFAULT 0")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE faqs ADD COLUMN note TEXT")
         except Exception:
             pass
         conn.commit()
@@ -79,11 +84,16 @@ def init_db():
                 content_v2 TEXT,
                 created_date TEXT,
                 modified_date TEXT,
-                images TEXT
+                images TEXT,
+                note TEXT
             )
         """)
         try:
             cursor.execute("ALTER TABLE faqs ADD COLUMN is_archived INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE faqs ADD COLUMN note TEXT")
         except sqlite3.OperationalError:
             pass
         conn.commit()
@@ -122,6 +132,7 @@ class FAQ(BaseModel):
     modified_date: Optional[str] = None
     images: Optional[str] = None
     is_archived: Optional[int] = 0
+    note: Optional[str] = None
 
 @app.get("/faqs", response_model=List[FAQ])
 async def get_faqs():
@@ -149,10 +160,10 @@ async def create_faq(faq: FAQ):
         conn = get_pg_conn()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO faqs (theme, main_item, sub_item, detail, content_v1, content_v2, created_date, modified_date, images, is_archived)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO faqs (theme, main_item, sub_item, detail, content_v1, content_v2, created_date, modified_date, images, is_archived, note)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
-        """, (faq.theme, faq.main_item, faq.sub_item, faq.detail, faq.content_v1, faq.content_v2, now, now, faq.images, is_archived))
+        """, (faq.theme, faq.main_item, faq.sub_item, faq.detail, faq.content_v1, faq.content_v2, now, now, faq.images, is_archived, faq.note))
         new_id = cursor.fetchone()["id"]
         conn.commit()
         cursor.close()
@@ -161,9 +172,9 @@ async def create_faq(faq: FAQ):
         conn = get_sqlite_conn()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO faqs (theme, main_item, sub_item, detail, content_v1, content_v2, created_date, modified_date, images, is_archived)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (faq.theme, faq.main_item, faq.sub_item, faq.detail, faq.content_v1, faq.content_v2, now, now, faq.images, is_archived))
+            INSERT INTO faqs (theme, main_item, sub_item, detail, content_v1, content_v2, created_date, modified_date, images, is_archived, note)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (faq.theme, faq.main_item, faq.sub_item, faq.detail, faq.content_v1, faq.content_v2, now, now, faq.images, is_archived, faq.note))
         new_id = cursor.lastrowid
         conn.commit()
         conn.close()
@@ -180,9 +191,9 @@ async def update_faq(faq_id: int, faq: FAQ):
         cursor.execute("""
             UPDATE faqs SET
                 theme=%s, main_item=%s, sub_item=%s, detail=%s,
-                content_v1=%s, content_v2=%s, modified_date=%s, images=%s, is_archived=%s
+                content_v1=%s, content_v2=%s, modified_date=%s, images=%s, is_archived=%s, note=%s
             WHERE id=%s
-        """, (faq.theme, faq.main_item, faq.sub_item, faq.detail, faq.content_v1, faq.content_v2, now, faq.images, is_archived, faq_id))
+        """, (faq.theme, faq.main_item, faq.sub_item, faq.detail, faq.content_v1, faq.content_v2, now, faq.images, is_archived, faq.note, faq_id))
         rowcount = cursor.rowcount
         conn.commit()
         cursor.close()
@@ -193,9 +204,9 @@ async def update_faq(faq_id: int, faq: FAQ):
         cursor.execute("""
             UPDATE faqs SET
                 theme=?, main_item=?, sub_item=?, detail=?,
-                content_v1=?, content_v2=?, modified_date=?, images=?, is_archived=?
+                content_v1=?, content_v2=?, modified_date=?, images=?, is_archived=?, note=?
             WHERE id=?
-        """, (faq.theme, faq.main_item, faq.sub_item, faq.detail, faq.content_v1, faq.content_v2, now, faq.images, is_archived, faq_id))
+        """, (faq.theme, faq.main_item, faq.sub_item, faq.detail, faq.content_v1, faq.content_v2, now, faq.images, is_archived, faq.note, faq_id))
         rowcount = cursor.rowcount
         conn.commit()
         conn.close()
@@ -226,6 +237,34 @@ async def delete_faq(faq_id: int):
     if rowcount == 0:
         raise HTTPException(status_code=404, detail="FAQ not found")
     return {"message": "FAQ deleted successfully"}
+
+class AIChatRequest(BaseModel):
+    query: str
+
+@app.post("/api/ai_chat")
+async def ai_chat(req: AIChatRequest):
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=400, detail="未設定 GEMINI_API_KEY。請在環境變數中加入您的 Gemini API 密鑰。")
+    
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        
+        prompt = f"""
+你是一位專業的 ECOCO (點數回饋平台) 客服助手。
+你的職責是基於 ECOCO 的官方網站(https://www.ecoco.network/)、官方粉絲團以及公開資訊，提供準確且有禮貌的客服回覆。
+請直接以客服的口吻回覆，內容應該幫助解決用戶的問題，並避免給出未經證實的承諾。
+如果問題超出 ECOCO 的範圍，請委婉告知。
+
+用戶的問題是：「{req.query}」
+"""
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
+        return {"response": response.text}
+    except Exception as e:
+        logger.error(f"AI Error: {e}")
+        raise HTTPException(status_code=500, detail=f"AI 生成失敗: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
