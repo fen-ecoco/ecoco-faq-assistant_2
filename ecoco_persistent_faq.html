@@ -6,10 +6,9 @@
     <title>ECOCO FAQ 管理系統</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
         tailwind.config = {
             theme: { extend: { colors: { ecoco: { orange: '#FF5000', deepBlue: '#060E9F', yellow: '#FFCE00', lightBlue: '#8EB9C9', beige: '#FAE0B8', aqua: '#0076A9' } } } }
@@ -22,51 +21,44 @@
 
         /* Sidebar */
         #faq-sidebar {
-            width: 100px; min-width: 100px; background: #060E9F;
+            width: 72px; min-width: 72px; background: #060E9F;
             display: flex; flex-direction: column; align-items: center;
-            padding: 16px 0 20px; gap: 6px;
+            padding: 12px 0 20px; gap: 2px;
             position: sticky; top: 0; height: 100vh; z-index: 40;
         }
-        .sb-logo { width: 44px; height: 44px; background: #FF5000; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff; font-size: 20px; margin-bottom: 12px; }
-        .sb-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px; border-radius: 12px; cursor: pointer; width: 76px; transition: background 0.15s; border: none; background: transparent; }
+        .sb-logo { width: 36px; height: 36px; background: #FF5000; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 16px; margin-bottom: 12px; }
+        .sb-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 11px; cursor: pointer; width: 62px; transition: background 0.15s; border: none; background: transparent; }
         .sb-btn:hover { background: rgba(255,255,255,0.12); }
         .sb-btn.sb-active { background: rgba(255,255,255,0.2); }
-        .sb-btn svg { width: 24px; height: 24px; stroke: rgba(255,255,255,0.5); transition: stroke 0.15s; }
+        .sb-btn svg { width: 20px; height: 20px; stroke: rgba(255,255,255,0.5); transition: stroke 0.15s; }
         .sb-btn.sb-active svg, .sb-btn:hover svg { stroke: #fff; }
-        .sb-label { font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.5); text-align: center; line-height: 1.3; transition: color 0.15s; }
+        .sb-label { font-size: 10px; color: rgba(255,255,255,0.5); text-align: center; line-height: 1.3; transition: color 0.15s; }
         .sb-btn.sb-active .sb-label, .sb-btn:hover .sb-label { color: #fff; }
         .sb-btn.sb-hot svg { stroke: #fbbf24; }
         .sb-btn.sb-hot .sb-label { color: #fbbf24; }
         .sb-btn.sb-smart svg { stroke: #34d399; }
         .sb-btn.sb-smart .sb-label { color: #34d399; }
         .sb-btn.sb-smart.sb-active { background: rgba(52,211,153,0.15); }
-        .sb-btn.sb-ai svg { stroke: #a78bfa; }
-        .sb-btn.sb-ai .sb-label { color: #a78bfa; }
-        .sb-btn.sb-ai.sb-active { background: rgba(167,139,250,0.15); }
-        .sb-divider { width: 50px; height: 1px; background: rgba(255,255,255,0.15); margin: 10px 0; }
-        .sb-badge { background: #f59e0b; color: #fff; font-size: 12px; padding: 2px 8px; border-radius: 999px; font-weight: 700; min-width: 24px; text-align: center; line-height: 1.6; }
+        .sb-divider { width: 36px; height: 1px; background: rgba(255,255,255,0.15); margin: 6px 0; }
+        .sb-badge { background: #f59e0b; color: #fff; font-size: 9px; padding: 1px 5px; border-radius: 999px; font-weight: 700; min-width: 16px; text-align: center; line-height: 1.6; }
 
         /* Chip filter bar */
         #chip-bar { display: none; flex-wrap: wrap; gap: 8px; padding: 10px 20px 8px; background: #f8faff; border-bottom: 1px solid #e0e7ff; }
         #chip-bar.visible { display: flex; }
-        .chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid #c7d2fe; background: #fff; color: #3730a3; transition: all 0.15s; white-space: nowrap; }
+        .chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid #c7d2fe; background: #fff; color: #3730a3; transition: all 0.15s; white-space: nowrap; }
         .chip:hover { background: #e0e7ff; border-color: #818cf8; }
         .chip.chip-active { background: #060E9F; color: #fff; border-color: #060E9F; }
-        .chip-count { background: rgba(255,255,255,0.25); border-radius: 999px; padding: 1px 7px; font-size: 10px; font-weight: 700; }
+        .chip-count { background: rgba(255,255,255,0.25); border-radius: 999px; padding: 0px 6px; font-size: 10px; font-weight: 700; }
         .chip.chip-active .chip-count { background: rgba(255,255,255,0.25); }
         .chip:not(.chip-active) .chip-count { background: #e0e7ff; color: #3730a3; }
 
         /* Hot Panel */
-        #hot-panel { position: fixed; top: 0; left: 100px; width: 360px; height: 100vh; background: #fff; border-right: 1px solid #e2e8f0; z-index: 200; display: none; flex-direction: column; box-shadow: 6px 0 24px rgba(0,0,0,0.1); }
+        #hot-panel { position: fixed; top: 0; left: 72px; width: 320px; height: 100vh; background: #fff; border-right: 1px solid #e2e8f0; z-index: 200; display: none; flex-direction: column; box-shadow: 6px 0 24px rgba(0,0,0,0.1); }
         #hot-panel.open { display: flex; }
 
         /* Smart Panel */
-        #smart-panel { position: fixed; top: 0; left: 100px; width: 520px; height: 100vh; background: #fff; border-right: 1px solid #e2e8f0; z-index: 200; display: none; flex-direction: column; box-shadow: 6px 0 24px rgba(0,0,0,0.1); }
+        #smart-panel { position: fixed; top: 0; left: 72px; width: 360px; height: 100vh; background: #fff; border-right: 1px solid #e2e8f0; z-index: 200; display: none; flex-direction: column; box-shadow: 6px 0 24px rgba(0,0,0,0.1); }
         #smart-panel.open { display: flex; }
-
-        /* AI Panel */
-        #ai-panel { position: fixed; top: 0; left: 100px; width: 520px; height: 100vh; background: #fff; border-right: 1px solid #e2e8f0; z-index: 200; display: none; flex-direction: column; box-shadow: 6px 0 24px rgba(0,0,0,0.1); }
-        #ai-panel.open { display: flex; }
 
         #side-overlay { display: none; position: fixed; inset: 0; background: rgba(6,14,159,0.12); z-index: 190; }
         #side-overlay.open { display: block; }
@@ -90,19 +82,6 @@
         .panel-header { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; }
         .panel-close { background: rgba(255,255,255,0.15); border: none; color: #fff; width: 26px; height: 26px; border-radius: 7px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
         .panel-close:hover { background: rgba(255,255,255,0.25); }
-
-        /* Official FAQ Panel */
-        #official-panel { position: fixed; top: 0; left: 100px; width: 380px; height: 100vh; background: #fff; border-right: 1px solid #e2e8f0; z-index: 200; display: none; flex-direction: column; box-shadow: 6px 0 24px rgba(0,0,0,0.1); }
-        #official-panel.open { display: flex; }
-        .sb-btn.sb-official svg { stroke: #f9a8d4; }
-        .sb-btn.sb-official .sb-label { color: #f9a8d4; }
-        .sb-btn.sb-official.sb-active { background: rgba(249,168,212,0.15); }
-        .official-result { border: 1px solid #fce7f3; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: #fff; transition: border-color 0.15s, background 0.15s; }
-        .official-result:hover { border-color: #ec4899; background: #fdf2f8; }
-        .official-q { font-size: 12px; font-weight: 600; color: #1e293b; margin-bottom: 5px; }
-        .official-a { font-size: 11px; color: #64748b; line-height: 1.6; white-space: pre-wrap; word-break: break-all; max-height: 250px; overflow-y: auto; }
-        .official-copy-btn { margin-top: 6px; font-size: 11px; padding: 3px 9px; border-radius: 6px; border: 1px solid #fce7f3; background: #fdf2f8; color: #be185d; cursor: pointer; transition: all 0.15s; }
-        .official-copy-btn:hover { background: #ec4899; color: #fff; border-color: #ec4899; }
     </style>
 </head>
 <body>
@@ -141,118 +120,35 @@
         const [searchTerm, setSearchTerm] = useState('');
         const [isModalOpen, setIsModalOpen] = useState(false);
         const [editingFaq, setEditingFaq] = useState(null);
-        const [formData, setFormData] = useState({ theme:'', main_item:'', sub_item:'', detail:'', content_v1:'', content_v2:'', images:'', is_archived: 0, note: '' });
+        const [formData, setFormData] = useState({ theme:'', main_item:'', sub_item:'', detail:'', content_v1:'', content_v2:'' });
         const [guideVisible, setGuideVisible] = useState(true);
 
-        // Batch Edit State
-        const [selectedIds, setSelectedIds] = useState(new Set());
-        const [batchModalOpen, setBatchModalOpen] = useState(false);
-        const [batchData, setBatchData] = useState({ theme: '', main_item: '', sub_item: '' });
-        const [batchLoading, setBatchLoading] = useState(false);
-
         // Sidebar
-        const [sidebarMode, setSidebarMode] = useState('all');
+        const [sidebarMode, setSidebarMode] = useState('all'); // all | theme | item | version
         const [activeChip, setActiveChip] = useState(null);
         const [hotOpen, setHotOpen] = useState(false);
         const [smartOpen, setSmartOpen] = useState(false);
         const [copyCounts, setCopyCounts] = useState(getCopyCounts());
         const [smartQuery, setSmartQuery] = useState('');
         const [smartResults, setSmartResults] = useState([]);
-        const [gsUrl, setGsUrl] = useState(() => localStorage.getItem('ecoco_gs_url') || '');
-        const [gsData, setGsData] = useState([]);
-        const [gsLoading, setGsLoading] = useState(false);
-        const [fileData, setFileData] = useState([]);
-        const [fileLabel, setFileLabel] = useState('');
         const smartRef = useRef(null);
-        const [pendingScrollId, setPendingScrollId] = useState(null);
-        const [activeSuggestionField, setActiveSuggestionField] = useState(null);
+        const importFileRef = useRef(null);
+        const [showTop, setShowTop] = useState(false);
+        const [importOpen, setImportOpen] = useState(false);
+        const [importPreview, setImportPreview] = useState([]);
+        const [importLoading, setImportLoading] = useState(false);
+        const [importResult, setImportResult] = useState(null);
 
-        const [aiOpen, setAiOpen] = useState(false);
-        const [aiQuery, setAiQuery] = useState('');
-        const [aiResponse, setAiResponse] = useState('');
-        const [aiLoading, setAiLoading] = useState(false);
-        const [isAiEditing, setIsAiEditing] = useState(false);
+        useEffect(() => { checkConnection(); fetchFaqs(); const iv = setInterval(checkConnection, 5000); return () => clearInterval(iv); }, []);
 
-        const handleAiSubmit = async () => {
-            if(!aiQuery.trim()) return;
-            setAiLoading(true);
-            setAiResponse('');
-            setIsAiEditing(false);
-            
-            try {
-                const r = await fetch(`${API_URL}/api/ai_chat`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ query: aiQuery })
-                });
-                
-                const data = await r.json();
-                if (r.ok) {
-                    setAiResponse(data.response);
-                } else {
-                    setAiResponse(`❌ 系統提示：${data.detail || '未知錯誤'}\n請確認您已正確設定環境變數 GEMINI_API_KEY。`);
-                }
-            } catch (err) {
-                setAiResponse('❌ 伺服器連線失敗，請檢查後端是否已啟動。');
-            } finally {
-                setAiLoading(false);
-            }
-        };
-
-        useEffect(() => { 
-            checkConnection(); 
-            fetchFaqs(); 
-            const savedGsUrl = localStorage.getItem('ecoco_gs_url');
-            if (savedGsUrl) { setGsUrl(savedGsUrl); loadGsData(savedGsUrl); }
-            const iv = setInterval(checkConnection, 5000); 
-            return () => clearInterval(iv); 
+        useEffect(() => {
+            const onScroll = () => setShowTop(window.scrollY > 300);
+            window.addEventListener('scroll', onScroll);
+            return () => window.removeEventListener('scroll', onScroll);
         }, []);
 
-        // Fix scroll: watch pendingScrollId and scroll after render
-        useEffect(() => {
-            if (pendingScrollId === null) return;
-            const el = document.getElementById('faq-' + pendingScrollId);
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                el.style.outline = '3px solid #060E9F';
-                el.style.transition = 'outline 0.3s';
-                setTimeout(() => { el.style.outline = ''; }, 2200);
-                setPendingScrollId(null);
-            }
-        }, [pendingScrollId, faqs, sidebarMode, searchTerm]);
-
         const checkConnection = async () => { try { const r = await fetch(`${API_URL}/faqs`); setConnected(r.ok); } catch { setConnected(false); } };
-        const fetchFaqs = async () => { setLoading(true); try { const r = await fetch(`${API_URL}/faqs`); if (r.ok) { const d = await r.json(); setFaqs(Array.isArray(d)?d:[]); setSelectedIds(new Set()); } } catch(e){} finally { setLoading(false); } };
-
-        const handleBatchSubmit = async (e) => {
-            e.preventDefault();
-            if (selectedIds.size === 0) return;
-            setBatchLoading(true);
-            try {
-                // Fetch all selected faqs first to keep original values for empty fields
-                const targetFaqs = faqs.filter(f => selectedIds.has(f.id));
-                const promises = targetFaqs.map(faq => {
-                    const updated = { ...faq };
-                    if (batchData.theme.trim()) updated.theme = batchData.theme;
-                    if (batchData.main_item.trim()) updated.main_item = batchData.main_item;
-                    if (batchData.sub_item.trim()) updated.sub_item = batchData.sub_item;
-                    return fetch(`${API_URL}/faqs/${faq.id}`, {
-                        method: 'PUT',
-                        headers: {'Content-Type':'application/json'},
-                        body: JSON.stringify(updated)
-                    });
-                });
-                await Promise.all(promises);
-                alert(`成功更新 ${promises.length} 筆資料！`);
-                setBatchModalOpen(false);
-                setBatchData({ theme: '', main_item: '', sub_item: '' });
-                fetchFaqs();
-            } catch (err) {
-                alert("批次更新失敗，請檢查網路連線");
-            } finally {
-                setBatchLoading(false);
-            }
-        };
+        const fetchFaqs = async () => { setLoading(true); try { const r = await fetch(`${API_URL}/faqs`); if (r.ok) { const d = await r.json(); setFaqs(Array.isArray(d)?d:[]); } } catch(e){} finally { setLoading(false); } };
 
         const handleSubmit = async (e) => {
             e.preventDefault();
@@ -268,44 +164,11 @@
             try { const r = await fetch(`${API_URL}/faqs/${id}`,{method:'DELETE'}); if(r.ok) fetchFaqs(); else alert("刪除失敗"); } catch { alert("連線失敗"); }
         };
         const openModal = (faq=null) => {
-            if (faq) { setEditingFaq(faq); setFormData({theme:faq.theme||'',main_item:faq.main_item||'',sub_item:faq.sub_item||'',detail:faq.detail||'',content_v1:faq.content_v1||'',content_v2:faq.content_v2||'',images:faq.images||'',is_archived:faq.is_archived||0,note:faq.note||''}); }
-            else { setEditingFaq(null); setFormData({theme:'',main_item:'',sub_item:'',detail:'',content_v1:'',content_v2:'',images:'',is_archived:0,note:''}); }
+            if (faq) { setEditingFaq(faq); setFormData({theme:faq.theme||'',main_item:faq.main_item||'',sub_item:faq.sub_item||'',detail:faq.detail||'',content_v1:faq.content_v1||'',content_v2:faq.content_v2||''}); }
+            else { setEditingFaq(null); setFormData({theme:'',main_item:'',sub_item:'',detail:'',content_v1:'',content_v2:''}); }
             setIsModalOpen(true);
         };
-        const closeModal = () => { setIsModalOpen(false); setEditingFaq(null); setActiveSuggestionField(null); };
-
-        const handleImageUpload = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (file.size > 3 * 1024 * 1024) {
-                alert('為避免資料庫過大，請上傳 3MB 以下的圖片檔案');
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const base64 = ev.target.result;
-                setFormData(prev => ({
-                    ...prev,
-                    images: prev.images ? prev.images + ' ' + base64 : base64
-                }));
-            };
-            reader.readAsDataURL(file);
-            e.target.value = '';
-        };
-
-        const handleArchive = async (faq) => {
-            const newStatus = faq.is_archived === 1 ? 0 : 1;
-            const action = newStatus === 1 ? '封存' : '解除封存';
-            if (!confirm(`確定要${action}這條常見問題嗎？`)) return;
-            try {
-                const r = await fetch(`${API_URL}/faqs/${faq.id}`, {
-                    method: 'PUT',
-                    headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({...faq, is_archived: newStatus})
-                });
-                if (r.ok) fetchFaqs(); else alert("操作失敗");
-            } catch { alert("連線失敗"); }
-        };
+        const closeModal = () => { setIsModalOpen(false); setEditingFaq(null); };
 
         const copyToClipboard = (text, faqId, label) => {
             if (!text) return;
@@ -319,6 +182,95 @@
         const copyRowForSheet = (faq) => {
             const row = [faq.theme||'',faq.main_item||'',faq.sub_item||'',faq.detail||'',faq.content_v1||'',faq.content_v2||'',faq.created_date||''].join('\t');
             navigator.clipboard.writeText(row); alert('已複製整列資料 (適用於 Google Sheet 貼上)');
+        };
+
+        const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        const handleImportFile = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const text = ev.target.result;
+                    const lines = text.split(/\r?\n/).filter(l => l.trim());
+                    if (lines.length < 2) { alert('檔案內容不足，至少需要標題列和一筆資料'); return; }
+                    // Parse CSV or TSV
+                    const sep = lines[0].includes('\t') ? '\t' : ',';
+                    const parseRow = (line) => {
+                        if (sep === '\t') return line.split('\t').map(v => v.trim());
+                        const result = []; let cur = ''; let inQ = false;
+                        for (let i = 0; i < line.length; i++) {
+                            if (line[i] === '"') { inQ = !inQ; }
+                            else if (line[i] === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+                            else { cur += line[i]; }
+                        }
+                        result.push(cur.trim());
+                        return result;
+                    };
+                    const headers = parseRow(lines[0]);
+                    const colMap = {};
+                    const colNames = {
+                        theme: ['主題','theme','Theme'],
+                        main_item: ['主項目','項目','main_item','Main Item'],
+                        sub_item: ['小項目','版本','sub_item','Sub Item'],
+                        detail: ['細項','問題','detail','Detail'],
+                        content_v1: ['標準回覆','內容版本1','V1','content_v1','Content V1'],
+                        content_v2: ['備用英文','內容版本2','V2','content_v2','Content V2'],
+                    };
+                    headers.forEach((h, i) => {
+                        Object.entries(colNames).forEach(([key, names]) => {
+                            if (names.some(n => h.includes(n))) colMap[key] = i;
+                        });
+                    });
+                    if (colMap.theme === undefined) { alert('找不到「主題」欄位，請確認 Excel 第一列有欄位名稱'); return; }
+                    const rows = lines.slice(1).map(line => {
+                        const cols = parseRow(line);
+                        return {
+                            theme: cols[colMap.theme] || '',
+                            main_item: colMap.main_item !== undefined ? cols[colMap.main_item] || '' : '',
+                            sub_item: colMap.sub_item !== undefined ? cols[colMap.sub_item] || '' : '',
+                            detail: colMap.detail !== undefined ? cols[colMap.detail] || '' : '',
+                            content_v1: colMap.content_v1 !== undefined ? cols[colMap.content_v1] || '' : '',
+                            content_v2: colMap.content_v2 !== undefined ? cols[colMap.content_v2] || '' : '',
+                        };
+                    }).filter(r => r.theme);
+                    setImportPreview(rows);
+                    setImportResult(null);
+                } catch(err) { alert('解析失敗，請確認檔案格式正確'); }
+            };
+            // Read as text with UTF-8
+            reader.readAsText(file, 'UTF-8');
+            e.target.value = '';
+        };
+
+        const handleImportSubmit = async () => {
+            if (importPreview.length === 0) return;
+            setImportLoading(true);
+            let success = 0; let failed = 0;
+            for (const row of importPreview) {
+                try {
+                    const r = await fetch(`${API_URL}/faqs`, {
+                        method: 'POST',
+                        headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify(row)
+                    });
+                    if (r.ok) success++; else failed++;
+                } catch { failed++; }
+            }
+            setImportLoading(false);
+            setImportResult({ success, failed });
+            if (success > 0) fetchFaqs();
+        };
+
+        const downloadTemplate = () => {
+            const csv = '\uFEFF' + '主題,主項目,小項目,細項,標準回覆(V1),備用英文(V2)\n' +
+                '"APP2.0","登入與帳號","繁體版","無法收到簡訊驗證碼","親愛的會員您好，若未收到驗證碼請確認手機是否封鎖行銷簡訊。","Dear member, please check if your phone blocks marketing SMS."\n';
+            const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url;
+            a.download = 'ECOCO_FAQ_匯入範本.csv'; a.click();
+            URL.revokeObjectURL(url);
         };
 
         const exportCSV = () => {
@@ -415,10 +367,10 @@
 
         // Chip options from current faqs
         const chipOptions = useMemo(() => {
-            if (sidebarMode === 'all' || sidebarMode === 'hot' || sidebarMode === 'archive') return [];
+            if (sidebarMode === 'all' || sidebarMode === 'hot') return [];
             const field = sidebarMode === 'theme' ? 'theme' : sidebarMode === 'item' ? 'main_item' : 'sub_item';
             const counts = {};
-            faqs.filter(f => f.is_archived !== 1).forEach(f => { const v = f[field]; if (v) counts[v] = (counts[v]||0)+1; });
+            faqs.forEach(f => { const v = f[field]; if (v) counts[v] = (counts[v]||0)+1; });
             return Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([val,cnt])=>({val,cnt}));
         }, [faqs, sidebarMode]);
 
@@ -427,14 +379,9 @@
             let result = faqs.filter(faq =>
                 [faq.theme,faq.content_v1,faq.content_v2,faq.main_item,faq.detail,faq.sub_item].some(f=>(f||'').toLowerCase().includes(searchTerm.toLowerCase()))
             );
-            if (sidebarMode === 'archive') {
-                result = result.filter(f => f.is_archived === 1);
-            } else {
-                result = result.filter(f => f.is_archived !== 1);
-                if (activeChip) {
-                    const field = sidebarMode === 'theme' ? 'theme' : sidebarMode === 'item' ? 'main_item' : 'sub_item';
-                    result = result.filter(f => f[field] === activeChip);
-                }
+            if (activeChip) {
+                const field = sidebarMode === 'theme' ? 'theme' : sidebarMode === 'item' ? 'main_item' : 'sub_item';
+                result = result.filter(f => f[field] === activeChip);
             }
             return result;
         }, [faqs, searchTerm, activeChip, sidebarMode]);
@@ -452,68 +399,18 @@
 
         const setSidebarNav = (mode) => {
             setSidebarMode(mode); setActiveChip(null);
-            setHotOpen(false); setSmartOpen(false); setAiOpen(false);
+            setHotOpen(false); setSmartOpen(false);
         };
-        const toggleHot = () => { setSmartOpen(false); setAiOpen(false); setHotOpen(v=>!v); };
-        const toggleSmart = () => { setHotOpen(false); setAiOpen(false); setSmartOpen(v=>!v); setTimeout(()=>smartRef.current&&smartRef.current.focus(),100); };
-        const toggleAi = () => { setHotOpen(false); setSmartOpen(false); setAiOpen(v=>!v); };
-        const closePanel = () => { setHotOpen(false); setSmartOpen(false); setAiOpen(false); };
+        const toggleHot = () => { setSmartOpen(false); setHotOpen(v=>!v); };
+        const toggleSmart = () => { setHotOpen(false); setSmartOpen(v=>!v); setTimeout(()=>smartRef.current&&smartRef.current.focus(),100); };
+        const closePanel = () => { setHotOpen(false); setSmartOpen(false); };
 
         const scrollToFaq = (faqId) => {
             closePanel();
-            setSidebarMode('all');
-            setActiveChip(null);
-            setSearchTerm('');
-            setPendingScrollId(faqId);
+            setTimeout(()=>{ const el=document.getElementById('faq-'+faqId); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='2px solid #060E9F'; setTimeout(()=>el.style.outline='',2000); } },200);
         };
 
-        // Load Google Sheet CSV via XLSX to handle multi-line cells correctly
-        const loadGsData = async (url) => {
-            if (!url.trim()) return;
-            setGsLoading(true);
-            try {
-                let fetchUrl = url;
-                if (url.includes('docs.google.com/spreadsheets')) {
-                    const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-                    if (match) {
-                        const sheetId = match[1];
-                        const gidMatch = url.match(/gid=([0-9]+)/);
-                        const gid = gidMatch ? gidMatch[1] : '0';
-                        fetchUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
-                    }
-                }
-                const res = await fetch(fetchUrl);
-                if (!res.ok) throw new Error('Network response was not ok');
-                const text = await res.text();
-                const wb = window.XLSX.read(text, {type: 'string'});
-                const wsname = wb.SheetNames[0];
-                const ws = wb.Sheets[wsname];
-                const rows = window.XLSX.utils.sheet_to_json(ws, {defval: ''});
-                setGsData(rows);
-                localStorage.setItem('ecoco_gs_url', url);
-            } catch(e) { alert('載入失敗，請確認網址是否為公開的 Google Sheet 或格式正確'); }
-            finally { setGsLoading(false); }
-        };
-
-        // Load file (XLSX, XLS, CSV)
-        const loadFile = (file) => {
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const wb = window.XLSX.read(data, {type: 'array'});
-                    const wsname = wb.SheetNames[0];
-                    const ws = wb.Sheets[wsname];
-                    const rows = window.XLSX.utils.sheet_to_json(ws, {defval: ''});
-                    setFileData(rows);
-                    setFileLabel(file.name + ' (' + rows.length + ' 筆)');
-                } catch(err) { alert('檔案解析失敗，請確認檔案格式是否正確'); }
-            };
-            reader.readAsArrayBuffer(file);
-        };
-
-        const modeLabel = { theme:'主題', item:'項目', version:'版本', archive:'封存' };
+        const modeLabel = { theme:'主題', item:'項目', version:'版本' };
 
         return (
             <div style={{display:'flex', minHeight:'100vh'}}>
@@ -542,11 +439,6 @@
                         <span className="sb-label">版本</span>
                     </button>
 
-                    <button className={`sb-btn ${sidebarMode==='archive'&&!hotOpen&&!smartOpen?'sb-active':''}`} onClick={()=>setSidebarNav('archive')}>
-                        <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.6"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
-                        <span className="sb-label">封存</span>
-                    </button>
-
                     <div className="sb-divider"></div>
 
                     {/* Smart match */}
@@ -561,13 +453,6 @@
                         <span className="sb-label">熱門</span>
                         {hotList.length>0 && <span className="sb-badge">{hotList.length>99?'99+':hotList.length}</span>}
                     </button>
-
-                    {/* AI */}
-                    <button className={`sb-btn sb-ai ${aiOpen?'sb-active':''}`} onClick={toggleAi}>
-                        <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.6"><path d="M12 2a2 2 0 012 2v2a2 2 0 11-4 0V4a2 2 0 012-2z"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M9 14h.01M15 14h.01M12 18v.01M2 14h2M20 14h2"/></svg>
-                        <span className="sb-label">AI客服</span>
-                    </button>
-
                 </nav>
 
                 {/* ── Main ── */}
@@ -643,6 +528,9 @@
                                 <button onClick={()=>{checkConnection();fetchFaqs();}} className="bg-white text-ecoco-deepBlue p-4 rounded-2xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-all flex items-center justify-center" title="重新整理連線">
                                     <i className={`fas fa-sync-alt ${loading?'animate-spin':''}`}></i>
                                 </button>
+                                <button onClick={()=>{setImportOpen(true);setImportPreview([]);setImportResult(null);}} className="bg-white text-ecoco-deepBlue px-4 py-4 rounded-2xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-all flex items-center space-x-2 whitespace-nowrap" title="Excel 匯入">
+                                    <i className="fas fa-file-import text-ecoco-deepBlue"></i><span className="hidden md:inline text-sm font-bold">匯入</span>
+                                </button>
                                 <button onClick={exportCSV} className="bg-white text-ecoco-deepBlue px-4 py-4 rounded-2xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-all flex items-center space-x-2 whitespace-nowrap" title="匯出 CSV">
                                     <i className="fas fa-file-csv text-green-600"></i><span className="hidden md:inline text-sm font-bold">CSV</span>
                                 </button>
@@ -658,57 +546,14 @@
                             </div>
                         </div>
 
-                        {/* Result count & Batch Edit Toolbar */}
-                        <div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-gray-500 justify-between">
-                            <div className="flex items-center gap-3 text-[16px]">
-                                {(activeChip || sidebarMode !== 'all') && (
-                                    <>
-                                        <span className="bg-ecoco-deepBlue/10 text-ecoco-deepBlue font-semibold px-4 py-1.5 rounded-full">{modeLabel[sidebarMode]}：{activeChip}</span>
-                                        <span className="font-medium">共 {filteredFaqs.length} 筆</span>
-                                        <button onClick={()=>setActiveChip(null)} className="text-sm text-ecoco-orange hover:underline ml-1">✕ 清除</button>
-                                    </>
-                                )}
-                                {!activeChip && sidebarMode === 'all' && (
-                                    <span className="font-medium">共 {filteredFaqs.length} 筆</span>
-                                )}
+                        {/* Result count & active filter label */}
+                        {(activeChip || sidebarMode !== 'all') && (
+                            <div className="mb-4 flex items-center gap-2 text-sm text-gray-500">
+                                {activeChip && <span className="bg-ecoco-deepBlue/10 text-ecoco-deepBlue font-semibold px-3 py-1 rounded-full text-xs">{modeLabel[sidebarMode]}：{activeChip}</span>}
+                                <span>共 {filteredFaqs.length} 筆</span>
+                                {activeChip && <button onClick={()=>setActiveChip(null)} className="text-xs text-ecoco-orange hover:underline ml-1">✕ 清除</button>}
                             </div>
-
-                            <div className="flex items-center gap-3 ml-auto">
-                                {filteredFaqs.length > 0 && (
-                                    <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50">
-                                        <span className="font-medium text-gray-700">全選本頁</span>
-                                        <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-ecoco-deepBlue focus:ring-ecoco-deepBlue"
-                                            checked={filteredFaqs.length > 0 && filteredFaqs.every(f => selectedIds.has(f.id))}
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    const newSet = new Set(selectedIds);
-                                                    filteredFaqs.forEach(f => newSet.add(f.id));
-                                                    setSelectedIds(newSet);
-                                                } else {
-                                                    const newSet = new Set(selectedIds);
-                                                    filteredFaqs.forEach(f => newSet.delete(f.id));
-                                                    setSelectedIds(newSet);
-                                                }
-                                            }}
-                                        />
-                                    </label>
-                                )}
-
-                                {selectedIds.size > 0 && (
-                                    <div className="flex items-center gap-2 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 animate-fade-in flex-wrap">
-                                        <span className="text-indigo-700 font-bold text-xs whitespace-nowrap">已選 {selectedIds.size} 筆</span>
-                                        <input type="text" placeholder="新主題..." className="w-24 px-2 py-1 text-[13px] rounded border border-gray-200 outline-none focus:border-indigo-400" value={batchData.theme} onChange={e => setBatchData({...batchData, theme: e.target.value})} />
-                                        <input type="text" placeholder="新主項目..." className="w-24 px-2 py-1 text-[13px] rounded border border-gray-200 outline-none focus:border-indigo-400" value={batchData.main_item} onChange={e => setBatchData({...batchData, main_item: e.target.value})} />
-                                        <input type="text" placeholder="新版本..." className="w-20 px-2 py-1 text-[13px] rounded border border-gray-200 outline-none focus:border-indigo-400" value={batchData.sub_item} onChange={e => setBatchData({...batchData, sub_item: e.target.value})} />
-                                        
-                                        <button onClick={handleBatchSubmit} disabled={batchLoading} className="bg-indigo-600 text-white px-3 py-1 rounded text-[13px] font-bold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 whitespace-nowrap">
-                                            {batchLoading ? <i className="fas fa-spinner fa-spin"></i> : "批次替換"}
-                                        </button>
-                                        <button onClick={() => setSelectedIds(new Set())} className="text-indigo-400 hover:text-indigo-600 px-1 ml-1" title="取消選取"><i className="fas fa-times"></i></button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                        )}
 
                         {!connected && (
                             <div className="bg-red-50 border-2 border-red-100 p-8 rounded-3xl text-center mb-10">
@@ -726,138 +571,69 @@
                             </div>
                         ) : filteredFaqs.length > 0 ? (
                             <div className="space-y-8">
-                                {filteredFaqs.map(faq => {
-                                    const isArchived = faq.is_archived === 1;
-                                    return (
-                                    <div key={faq.id} id={`faq-${faq.id}`} className={`bg-white rounded-2xl shadow-sm border-l-4 overflow-hidden flex flex-col animate-fade-in group ${isArchived ? 'border-l-[#999EA2] bg-[#f8f9fa] border border-gray-200' : 'border-l-ecoco-deepBlue border border-gray-100'}`}>
+                                {filteredFaqs.map(faq => (
+                                    <div key={faq.id} id={`faq-${faq.id}`} className="bg-white rounded-2xl shadow-sm border-l-4 border-l-ecoco-deepBlue border border-gray-100 overflow-hidden flex flex-col animate-fade-in group">
                                         <div className="p-4 md:p-6 border-b border-gray-50 flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0">
-
-                                            <div className="flex flex-wrap gap-2 md:mr-4">
-                                                <div className={`flex items-center font-bold rounded overflow-hidden border ${isArchived ? 'bg-gray-100 text-[#999EA2] border-gray-200' : 'bg-indigo-50 text-ecoco-deepBlue border-indigo-100'}`}>
-                                                    <span className={`px-3 py-1.5 ${isArchived ? 'bg-gray-200 text-[#7a7f85]' : 'bg-indigo-100'}`}>主題</span>
-                                                    <span className={`px-3 py-1.5 cursor-pointer transition-colors ${isArchived ? 'hover:bg-gray-200' : 'hover:bg-indigo-100'}`} onClick={()=>{setSidebarMode('theme');setActiveChip(faq.theme);}}>{faq.theme}</span>
+                                            <div className="flex flex-wrap gap-2 md:mr-4 text-base">
+                                                <div className="flex items-center bg-indigo-50 text-ecoco-deepBlue font-bold rounded overflow-hidden border border-indigo-100">
+                                                    <span className="bg-indigo-100 px-3 py-1.5">主題</span>
+                                                    <span className="px-3 py-1.5 cursor-pointer hover:bg-indigo-100 transition-colors" onClick={()=>{setSidebarMode('theme');setActiveChip(faq.theme);}}>{faq.theme}</span>
                                                 </div>
-                                                <div className={`flex items-center font-bold rounded overflow-hidden border ${isArchived ? 'bg-gray-100 text-[#999EA2] border-gray-200' : 'bg-cyan-50 text-ecoco-aqua border-cyan-100'}`}>
-                                                    <span className={`px-3 py-1.5 ${isArchived ? 'bg-gray-200 text-[#7a7f85]' : 'bg-cyan-100'}`}>項目</span>
-                                                    <span className={`px-3 py-1.5 cursor-pointer transition-colors ${isArchived ? 'hover:bg-gray-200' : 'hover:bg-cyan-100'}`} onClick={()=>{setSidebarMode('item');setActiveChip(faq.main_item);}}>{faq.main_item||'-'}</span>
+                                                <div className="flex items-center bg-cyan-50 text-ecoco-aqua font-bold rounded overflow-hidden border border-cyan-100">
+                                                    <span className="bg-cyan-100 px-3 py-1.5">項目</span>
+                                                    <span className="px-3 py-1.5 cursor-pointer hover:bg-cyan-100 transition-colors" onClick={()=>{setSidebarMode('item');setActiveChip(faq.main_item);}}>{faq.main_item||'-'}</span>
                                                 </div>
-                                                <div className={`flex items-center font-bold rounded overflow-hidden border ${isArchived ? 'bg-gray-100 text-[#999EA2] border-gray-200' : 'bg-blue-50 text-ecoco-lightBlue border-blue-100'}`}>
-                                                    <span className={`px-3 py-1.5 ${isArchived ? 'bg-gray-200 text-[#7a7f85]' : 'bg-blue-100'}`}>版本</span>
-                                                    <span className={`px-3 py-1.5 cursor-pointer transition-colors ${isArchived ? 'hover:bg-gray-200' : 'hover:bg-blue-100'}`} onClick={()=>{setSidebarMode('version');setActiveChip(faq.sub_item);}}>{faq.sub_item||'-'}</span>
+                                                <div className="flex items-center bg-blue-50 text-ecoco-lightBlue font-bold rounded overflow-hidden border border-blue-100">
+                                                    <span className="bg-blue-100 px-3 py-1.5">版本</span>
+                                                    <span className="px-3 py-1.5 cursor-pointer hover:bg-blue-100 transition-colors" onClick={()=>{setSidebarMode('version');setActiveChip(faq.sub_item);}}>{faq.sub_item||'-'}</span>
                                                 </div>
                                             </div>
-                                            <h3 className={`font-bold flex-grow mt-2 md:mt-0 text-base md:text-lg ${isArchived ? 'text-[#999EA2]' : 'text-ecoco-deepBlue'}`}>{faq.detail} {isArchived && <span className="text-sm font-normal text-[#999EA2] bg-gray-200 px-2 py-0.5 rounded ml-2">[已封存]</span>}</h3>
+                                            <h3 className="font-bold text-ecoco-deepBlue text-lg flex-grow">{faq.detail}</h3>
                                             <div className="flex items-center space-x-4 w-full md:w-auto justify-between md:justify-end">
-                                                <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">建立日: {faq.created_date}</span>
-                                                <div className="flex items-center space-x-2">
-                                                    {/* Checkbox for individual faq */}
-                                                    <input type="checkbox" className="w-4 h-4 mr-2 rounded border-gray-300 text-ecoco-deepBlue focus:ring-ecoco-deepBlue cursor-pointer"
-                                                        checked={selectedIds.has(faq.id)}
-                                                        onChange={(e) => {
-                                                            const newSet = new Set(selectedIds);
-                                                            if (e.target.checked) newSet.add(faq.id);
-                                                            else newSet.delete(faq.id);
-                                                            setSelectedIds(newSet);
-                                                        }}
-                                                    />
-                                                    <button onClick={()=>openModal(faq)} className={`p-2 transition-colors ${isArchived ? 'text-[#999EA2] hover:text-gray-600' : 'text-gray-400 hover:text-ecoco-deepBlue'}`}><i className="fas fa-pen"></i></button>
-                                                    <button onClick={()=>handleArchive(faq)} className={`p-2 transition-colors ${isArchived ? 'text-[#999EA2] hover:text-gray-600' : 'text-gray-400 hover:text-ecoco-deepBlue'}`} title={isArchived ? '解除封存' : '封存'}><i className={`fas ${isArchived ? 'fa-box-open' : 'fa-box'}`}></i></button>
-                                                    <button onClick={()=>handleDelete(faq.id)} className={`p-2 transition-colors ${isArchived ? 'text-[#999EA2] hover:text-red-500' : 'text-gray-400 hover:text-red-500'}`}><i className="fas fa-trash-alt"></i></button>
+                                                <span className="text-[10px] text-gray-400 font-medium">建立日: {faq.created_date}</span>
+                                                <div className="flex space-x-1">
+                                                    <button onClick={()=>openModal(faq)} className="p-2 text-gray-400 hover:text-ecoco-deepBlue transition-colors"><i className="fas fa-pen"></i></button>
+                                                    <button onClick={()=>handleDelete(faq.id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors"><i className="fas fa-trash-alt"></i></button>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className={`p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 ${isArchived ? 'bg-gray-100/50' : 'bg-gray-50/30'}`}>
-                                            <div className={`rounded-xl border p-4 shadow-sm ${isArchived ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100'}`}>
+                                        <div className="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 bg-gray-50/30">
+                                            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
                                                 <div className="flex justify-between items-center mb-3">
                                                     <div className="flex items-center space-x-2">
-                                                        <span className={`text-white text-[10px] font-black px-1.5 py-0.5 rounded ${isArchived ? 'bg-[#999EA2]' : 'bg-ecoco-orange'}`}>V1</span>
-                                                        <span className={`text-sm font-bold ${isArchived ? 'text-[#999EA2]' : 'text-ecoco-orange'}`}>標準回覆</span>
+                                                        <span className="bg-ecoco-orange text-white text-[10px] font-black px-1.5 py-0.5 rounded">V1</span>
+                                                        <span className="text-sm font-bold text-ecoco-orange">標準回覆</span>
                                                     </div>
-                                                    <button onClick={()=>copyToClipboard(faq.content_v1,faq.id,faq.detail||faq.theme)} className={`text-sm bg-gray-50 px-3 py-1.5 rounded border border-gray-100 transition-all flex items-center space-x-1 ${isArchived ? 'text-[#999EA2] hover:bg-[#999EA2] hover:text-white' : 'text-ecoco-deepBlue hover:bg-ecoco-deepBlue hover:text-white'}`}>
+                                                    <button onClick={()=>copyToClipboard(faq.content_v1,faq.id,faq.detail||faq.theme)} className="text-sm bg-gray-50 text-ecoco-deepBlue px-3 py-1.5 rounded border border-gray-100 hover:bg-ecoco-deepBlue hover:text-white transition-all flex items-center space-x-1">
                                                         <i className="fas fa-copy"></i><span>複製</span>
                                                     </button>
                                                 </div>
-                                                <div className={`text-sm leading-relaxed min-h-[5rem] whitespace-pre-wrap ${isArchived ? 'text-[#999EA2]' : 'text-gray-600'}`}>{faq.content_v1||<span className="italic text-gray-300">尚未輸入內容...</span>}</div>
+                                                <div className="text-sm text-gray-600 leading-relaxed min-h-[5rem] whitespace-pre-wrap">{faq.content_v1||<span className="italic text-gray-300">尚未輸入內容...</span>}</div>
                                             </div>
-                                            <div className={`rounded-xl border p-4 shadow-sm ${isArchived ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100'}`}>
+                                            <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
                                                 <div className="flex justify-between items-center mb-3">
                                                     <div className="flex items-center space-x-2">
-                                                        <span className={`text-white text-[10px] font-black px-1.5 py-0.5 rounded ${isArchived ? 'bg-[#999EA2]' : 'bg-ecoco-aqua'}`}>V2</span>
-                                                        <span className={`text-sm font-bold ${isArchived ? 'text-[#999EA2]' : 'text-ecoco-aqua'}`}>備用/英文</span>
+                                                        <span className="bg-ecoco-aqua text-white text-[10px] font-black px-1.5 py-0.5 rounded">V2</span>
+                                                        <span className="text-sm font-bold text-ecoco-aqua">備用/英文</span>
                                                     </div>
-                                                    <button onClick={()=>copyToClipboard(faq.content_v2,faq.id,faq.detail||faq.theme)} className={`text-sm bg-gray-50 px-3 py-1.5 rounded border border-gray-100 transition-all flex items-center space-x-1 ${isArchived ? 'text-[#999EA2] hover:bg-[#999EA2] hover:text-white' : 'text-ecoco-deepBlue hover:bg-ecoco-deepBlue hover:text-white'}`}>
+                                                    <button onClick={()=>copyToClipboard(faq.content_v2,faq.id,faq.detail||faq.theme)} className="text-sm bg-gray-50 text-ecoco-deepBlue px-3 py-1.5 rounded border border-gray-100 hover:bg-ecoco-deepBlue hover:text-white transition-all flex items-center space-x-1">
                                                         <i className="fas fa-copy"></i><span>複製</span>
                                                     </button>
                                                 </div>
-                                                <div className={`text-sm leading-relaxed min-h-[5rem] whitespace-pre-wrap ${isArchived ? 'text-[#999EA2]' : 'text-gray-600'}`}>{faq.content_v2||<span className="italic text-gray-300">尚未輸入內容...</span>}</div>
+                                                <div className="text-sm text-gray-600 leading-relaxed min-h-[5rem] whitespace-pre-wrap">{faq.content_v2||<span className="italic text-gray-300">尚未輸入內容...</span>}</div>
                                             </div>
                                         </div>
-                                        {/* Images / Video links */}
-                                        {faq.images && faq.images.trim() && (() => {
-                                            const links = faq.images.trim().split(/\s+/).filter(Boolean);
-                                            const isYT = url => /youtu(\.be|be\.com)/i.test(url);
-                                            const getYTId = url => { const m = url.match(/(?:v=|youtu\.be\/|youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=))([a-zA-Z0-9_-]{11})/i); return m?m[1]:null; };
-                                            return (
-                                                <div className={`px-4 md:px-6 pb-4 ${isArchived?'bg-gray-100/50':'bg-gray-50/30'}`}>
-                                                    <div style={{display:'flex',flexWrap:'wrap',gap:8,alignItems:'flex-start'}}>
-                                                        {links.map((url,i) => {
-                                                            if (isYT(url)) {
-                                                                const ytId = getYTId(url);
-                                                                return ytId ? (
-                                                                    <a key={i} href={url} target="_blank" rel="noreferrer" title={url} style={{display:'block',flexShrink:0}}>
-                                                                        <div style={{position:'relative',width:96,height:54,borderRadius:6,overflow:'hidden',border:'1px solid #e2e8f0',boxShadow:'0 1px 4px rgba(0,0,0,0.08)'}}>
-                                                                            <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} style={{width:'100%',height:'100%',objectFit:'cover'}} alt="YouTube" onError={(e)=>e.target.style.display='none'}/>
-                                                                            <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.25)'}}>
-                                                                                <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                ) : null;
-                                                            } else {
-                                                                let previewUrl = url;
-                                                                const gdriveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/i);
-                                                                if (gdriveMatch) previewUrl = `https://drive.google.com/uc?id=${gdriveMatch[1]}`;
-                                                                return (
-                                                                    <a key={i} href={url} target="_blank" rel="noreferrer" style={{display:'block',flexShrink:0,position:'relative'}} className="group" title={url}>
-                                                                        <div style={{width:80,height:60,borderRadius:6,border:'1px solid #e2e8f0',boxShadow:'0 1px 4px rgba(0,0,0,0.08)',overflow:'hidden',background:'#f8fafc'}}>
-                                                                            <img src={previewUrl} alt="附圖" style={{width:'100%',height:'100%',objectFit:'cover'}} onError={(e)=>{ e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }}/>
-                                                                            <div style={{display:'none',flexDirection:'column',alignItems:'center',justifyContent:'center',width:'100%',height:'100%',padding:4,boxSizing:'border-box'}}>
-                                                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-                                                                                <span style={{fontSize:9,color:'#6366f1',marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',width:'100%',textAlign:'center'}}>{url.replace(/^https?:\/\//,'')}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                );
-                                                            }
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
-                                        {/* Notes / Internal Memo */}
-                                        {faq.note && faq.note.trim() && (
-                                            <div className={`px-4 md:px-6 pb-4 ${isArchived?'bg-gray-100/50':'bg-gray-50/30'}`}>
-                                                <div className="bg-yellow-50/50 border border-yellow-200/60 rounded-xl p-3 flex items-start space-x-3">
-                                                    <i className="fas fa-sticky-note text-yellow-500 mt-0.5"></i>
-                                                    <div>
-                                                        <p className="text-xs font-bold text-yellow-700 mb-1">內部備註</p>
-                                                        <p className="text-sm text-yellow-800 whitespace-pre-wrap">{faq.note}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div className={`px-4 py-3 md:px-6 border-t flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0 ${isArchived ? 'bg-gray-100/80 border-gray-200' : 'bg-ecoco-beige/20 border-gray-50'}`}>
-                                            <div className={`flex items-center space-x-2 ${isArchived ? 'text-[#999EA2]' : 'text-ecoco-orange'}`}>
-                                                <i className={`far fa-lightbulb text-sm ${isArchived ? '' : 'animate-pulse'}`}></i>
+                                        <div className="px-4 py-3 md:px-6 bg-ecoco-beige/20 border-t border-gray-50 flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">
+                                            <div className="flex items-center space-x-2 text-ecoco-orange">
+                                                <i className="far fa-lightbulb text-sm animate-pulse"></i>
                                                 <span className="text-[11px] font-bold">這筆問答還沒匯入總表嗎?</span>
                                             </div>
-                                            <button onClick={()=>copyRowForSheet(faq)} className={`text-white text-[11px] font-bold px-4 py-2 rounded-lg flex items-center space-x-2 transition-all shadow-md active:scale-95 ${isArchived ? 'bg-[#999EA2] hover:bg-gray-500' : 'bg-ecoco-deepBlue hover:bg-black'}`}>
+                                            <button onClick={()=>copyRowForSheet(faq)} className="bg-ecoco-deepBlue text-white text-[11px] font-bold px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-black transition-all shadow-md active:scale-95">
                                                 <i className="fas fa-file-export"></i><span>複製整列 (Google Sheet 格式)</span>
                                             </button>
                                         </div>
                                     </div>
-                                    );
-                                })}
+                                ))}
                             </div>
                         ) : (
                             <div className="text-center py-20 bg-white/50 rounded-[3rem] border-4 border-dashed border-ecoco-beige flex flex-col items-center">
@@ -871,136 +647,30 @@
                     {isModalOpen && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ecoco-deepBlue/20 backdrop-blur-md">
                             <div className="bg-white rounded-[2.5rem] w-full max-w-6xl shadow-2xl overflow-hidden animate-modal-up border border-white max-h-[90vh] overflow-y-auto">
-                                <div className="bg-white p-6 md:p-8 pb-4 text-ecoco-deepBlue flex justify-between items-center sticky top-0 z-10 border-b border-gray-50">
+                                <div className="bg-white p-8 pb-4 text-ecoco-deepBlue flex justify-between items-center sticky top-0 z-10">
                                     <div className="flex items-center space-x-3">
                                         <div className="bg-ecoco-orange/10 text-ecoco-orange p-2 rounded-lg"><i className="far fa-file-alt text-xl"></i></div>
-                                        <h2 className="text-[20px] md:text-[22px] font-bold">記錄新的用戶問題至知識庫</h2>
+                                        <h2 className="text-2xl font-bold">記錄新的用戶問題至知識庫</h2>
                                     </div>
                                     <button onClick={closeModal} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-2xl text-gray-400">&times;</button>
                                 </div>
-                                <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
+                                <form onSubmit={handleSubmit} className="p-8 space-y-8">
                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                         {[['theme','主題 (Theme)','例: APP2.0'],['main_item','主項目 (Main Item)','例: 站點'],['sub_item','小項目 (Sub Item)','例: 繁體版'],['detail','細項 (Detail/User Question)','例: 地圖看不到綠色站點']].map(([key,label,ph])=>(
-                                            <div key={key} className={`space-y-2 relative ${activeSuggestionField === key ? 'z-50' : 'z-0'}`}>
-                                                <label className="text-[16px] md:text-[18px] font-bold text-ecoco-deepBlue flex items-center mb-1">{label}</label>
-                                                <input 
-                                                    type="text" 
-                                                    required={key==='theme'} 
-                                                    placeholder={ph} 
-                                                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-transparent focus:border-ecoco-deepBlue focus:bg-white outline-none transition-all text-sm md:text-base" 
-                                                    value={formData[key]} 
-                                                    onChange={(e)=>setFormData({...formData,[key]:e.target.value})} 
-                                                    onFocus={()=>setActiveSuggestionField(key)}
-                                                    onBlur={()=>setActiveSuggestionField(null)}
-                                                />
-                                                {activeSuggestionField === key && formData[key] && (
-                                                    <div className="absolute z-50 bg-white border border-gray-200 rounded-xl shadow-xl mt-1 w-full md:w-[150%] lg:w-[200%] max-h-60 overflow-y-auto" style={{top:'100%', left:0}}>
-                                                        {faqs.filter(f => (f[key]||'').toLowerCase().includes(formData[key].toLowerCase())).slice(0, 10).map(f => (
-                                                            <div key={f.id} className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 border-gray-100" onMouseDown={(e)=>{
-                                                                e.preventDefault();
-                                                                setFormData({
-                                                                    theme: f.theme||'',
-                                                                    main_item: f.main_item||'',
-                                                                    sub_item: f.sub_item||'',
-                                                                    detail: f.detail||'',
-                                                                    content_v1: f.content_v1||'',
-                                                                    content_v2: f.content_v2||'',
-                                                                    images: f.images||'',
-                                                                    is_archived: f.is_archived||0,
-                                                                    note: f.note||''
-                                                                });
-                                                                setActiveSuggestionField(null);
-                                                            }}>
-                                                                <div className="font-bold text-ecoco-deepBlue text-sm">{f[key] || '（無資料）'}</div>
-                                                                <div className="text-xs text-gray-500 mt-1">{[f.theme, f.main_item, f.sub_item, f.detail].filter(Boolean).join(' › ')}</div>
-                                                            </div>
-                                                        ))}
-                                                        {faqs.filter(f => (f[key]||'').toLowerCase().includes(formData[key].toLowerCase())).length === 0 && (
-                                                            <div className="p-3 text-sm text-gray-400 text-center">無符合的紀錄</div>
-                                                        )}
-                                                    </div>
-                                                )}
+                                            <div key={key} className="space-y-2">
+                                                <label className="text-sm font-bold text-ecoco-deepBlue flex items-center mb-1">{label}</label>
+                                                <input type="text" required={key==='theme'} placeholder={ph} className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-transparent focus:border-ecoco-deepBlue focus:bg-white outline-none transition-all" value={formData[key]} onChange={(e)=>setFormData({...formData,[key]:e.target.value})} />
                                             </div>
                                         ))}
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-3">
-                                            <label className="text-[16px] md:text-[18px] font-bold text-ecoco-orange flex items-center">內容版本1 (標準官方回覆)</label>
-                                            <div className="relative">
-                                                <textarea rows="6" placeholder="請輸入適合直接貼給用戶的標準回覆..." className="w-full px-5 py-4 pr-10 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-ecoco-orange focus:bg-white outline-none transition-all resize-none shadow-inner text-sm md:text-base" value={formData.content_v1} onChange={(e)=>setFormData({...formData,content_v1:e.target.value})}></textarea>
-                                                {formData.content_v1 && (
-                                                    <button type="button" onClick={() => setFormData({...formData, content_v1: ''})} className="absolute right-3 top-3 text-gray-400 hover:text-red-500 w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors">
-                                                        <i className="fas fa-times"></i>
-                                                    </button>
-                                                )}
-                                            </div>
+                                            <label className="text-sm font-bold text-ecoco-orange flex items-center">內容版本1 (標準官方回覆)</label>
+                                            <textarea rows="6" placeholder="請輸入適合直接貼給用戶的標準回覆..." className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-ecoco-orange focus:bg-white outline-none transition-all resize-none shadow-inner" value={formData.content_v1} onChange={(e)=>setFormData({...formData,content_v1:e.target.value})}></textarea>
                                         </div>
                                         <div className="space-y-3">
-                                            <label className="text-[16px] md:text-[18px] font-bold text-ecoco-aqua flex items-center">內容版本2 (英文版 / 備註補充)</label>
-                                            <div className="relative">
-                                                <textarea rows="6" placeholder="請輸入備用語句或英文翻譯版..." className="w-full px-5 py-4 pr-10 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-ecoco-aqua focus:bg-white outline-none transition-all resize-none shadow-inner text-sm md:text-base" value={formData.content_v2} onChange={(e)=>setFormData({...formData,content_v2:e.target.value})}></textarea>
-                                                {formData.content_v2 && (
-                                                    <button type="button" onClick={() => setFormData({...formData, content_v2: ''})} className="absolute right-3 top-3 text-gray-400 hover:text-red-500 w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors">
-                                                        <i className="fas fa-times"></i>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[16px] md:text-[18px] font-bold text-purple-600 flex items-center gap-2"><i className="fas fa-photo-video"></i>圖片 / 影片連結 (可選)</label>
-                                        <div className="flex gap-2">
-                                            <div className="flex-1 relative">
-                                                <input type="text" placeholder="例: https://imgur.com/xxx.png 或 https://youtu.be/xxx（多個連結請用空格分隔）" className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-transparent focus:border-purple-400 focus:bg-white outline-none transition-all pr-10" value={formData.images} onChange={(e)=>setFormData({...formData,images:e.target.value})} />
-                                                {formData.images && (
-                                                    <button type="button" onClick={() => setFormData({...formData, images: ''})} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors">
-                                                        <i className="fas fa-times"></i>
-                                                    </button>
-                                                )}
-                                            </div>
-                                            <label className="flex items-center justify-center bg-purple-100 text-purple-600 px-5 rounded-xl cursor-pointer hover:bg-purple-200 transition-colors whitespace-nowrap text-sm font-bold shadow-sm">
-                                                <i className="fas fa-upload mr-2"></i>上傳檔案
-                                                <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                                            </label>
-                                        </div>
-                                        {formData.images && (
-                                            <div className="flex flex-wrap gap-3 mt-3">
-                                                {formData.images.split(' ').filter(Boolean).map((url,i) => {
-                                                    const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
-                                                    if (ytMatch) {
-                                                        return (
-                                                            <a key={i} href={url} target="_blank" rel="noreferrer" className="block w-20 h-20 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative hover:opacity-80 transition-opacity bg-black flex-shrink-0" title={url}>
-                                                                <img src={`https://img.youtube.com/vi/${ytMatch[1]}/mqdefault.jpg`} className="w-full h-full object-cover opacity-80" />
-                                                                <div className="absolute inset-0 flex items-center justify-center"><i className="fab fa-youtube text-red-500 text-xl"></i></div>
-                                                            </a>
-                                                        );
-                                                    } else {
-                                                        let previewUrl = url;
-                                                        const gdriveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/i);
-                                                        if (gdriveMatch) previewUrl = `https://drive.google.com/uc?id=${gdriveMatch[1]}`;
-                                                        return (
-                                                            <a key={i} href={url} target="_blank" rel="noreferrer" className="block w-20 h-20 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative hover:opacity-80 transition-opacity bg-gray-50 flex-shrink-0 group" title={url}>
-                                                                <img src={previewUrl} alt="預覽" className="w-full h-full object-cover" onError={(e)=>{ e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
-                                                                <div className="absolute inset-0 flex-col items-center justify-center p-2 text-center" style={{display:'none'}}>
-                                                                    <i className="fas fa-link text-gray-400 mb-1"></i>
-                                                                    <span className="text-[9px] text-gray-500 font-medium leading-tight overflow-hidden break-all max-h-8">{url.replace(/^https?:\/\//,'')}</span>
-                                                                </div>
-                                                            </a>
-                                                        );
-                                                    }
-                                                })}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[16px] md:text-[18px] font-bold text-yellow-600 flex items-center gap-2"><i className="fas fa-sticky-note"></i>內部備註 (Note, 可選)</label>
-                                        <div className="relative">
-                                            <textarea rows="2" placeholder="僅供內部人員查看的備註..." className="w-full px-5 py-3 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-yellow-400 focus:bg-white outline-none transition-all resize-none shadow-inner pr-10 text-sm md:text-base" value={formData.note} onChange={(e)=>setFormData({...formData,note:e.target.value})}></textarea>
-                                            {formData.note && (
-                                                <button type="button" onClick={() => setFormData({...formData, note: ''})} className="absolute right-3 top-3 text-gray-400 hover:text-red-500 w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors">
-                                                    <i className="fas fa-times"></i>
-                                                </button>
-                                            )}
+                                            <label className="text-sm font-bold text-ecoco-aqua flex items-center">內容版本2 (英文版 / 備註補充)</label>
+                                            <textarea rows="6" placeholder="請輸入備用語句或英文翻譯版..." className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-ecoco-aqua focus:bg-white outline-none transition-all resize-none shadow-inner" value={formData.content_v2} onChange={(e)=>setFormData({...formData,content_v2:e.target.value})}></textarea>
                                         </div>
                                     </div>
                                     <div className="flex justify-end space-x-6 pt-4">
@@ -1021,7 +691,7 @@
                 </div>
 
                 {/* ── Overlay ── */}
-                {(hotOpen||smartOpen||aiOpen) && <div id="side-overlay" className="open" onClick={closePanel}></div>}
+                {(hotOpen||smartOpen) && <div id="side-overlay" className="open" onClick={closePanel}></div>}
 
                 {/* ── Hot Panel ── */}
                 <div id="hot-panel" className={hotOpen?'open':''}>
@@ -1030,14 +700,7 @@
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2"><path d="M12 2c0 6-6 8-6 14a6 6 0 0012 0c0-2-1-3.5-2-5-1 2-2 3-3 3 1-3 1-7-1-12z"/></svg>
                             熱門問題排行
                         </span>
-                        <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
-                            {hotList.length > 0 && (
-                                <button onClick={()=>{ if(confirm('確定要清除所有熱門紀錄嗎？')) { setCopyCounts({}); localStorage.removeItem(COPY_KEY); } }} style={{fontSize:11, background:'rgba(255,255,255,0.2)', border:'none', color:'#fff', padding:'4px 8px', borderRadius:6, cursor:'pointer'}} title="清除所有熱門排行紀錄">
-                                    一鍵清除
-                                </button>
-                            )}
-                            <button className="panel-close" onClick={closePanel}>✕</button>
-                        </div>
+                        <button className="panel-close" onClick={closePanel}>✕</button>
                     </div>
                     <div style={{flex:1,overflowY:'auto',padding:'12px 14px'}}>
                         {hotList.length===0 ? (
@@ -1058,87 +721,6 @@
                     </div>
                 </div>
 
-                {/* ── AI Panel ── */}
-                <div id="ai-panel" className={aiOpen?'open':''}>
-                    <div className="panel-header" style={{background:'#7c3aed'}}>
-                        <span style={{color:'#fff',fontSize:14,fontWeight:600,display:'flex',alignItems:'center',gap:8}}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" width="15" height="15"><path d="M12 2a2 2 0 012 2v2a2 2 0 11-4 0V4a2 2 0 012-2z"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M9 14h.01M15 14h.01M12 18v.01M2 14h2M20 14h2"/></svg>
-                            AI 客服建議
-                        </span>
-                        <button className="panel-close" onClick={closePanel}>✕</button>
-                    </div>
-                    <div style={{padding:'12px 14px',display:'flex',flexDirection:'column',gap:'12px',height:'100%'}}>
-                        <div style={{background:'#f5f3ff',padding:'12px',borderRadius:'8px',border:'1px solid #ddd6fe'}}>
-                            <p style={{fontSize:12,color:'#5b21b6',fontWeight:600,marginBottom:8}}>請輸入使用者問題：</p>
-                            <textarea 
-                                rows="3" 
-                                placeholder="貼上使用者的問題..."
-                                style={{width:'100%',padding:'10px',borderRadius:'6px',border:'1px solid #c4b5fd',fontSize:13,resize:'none',outline:'none',background:'#fff',boxSizing:'border-box'}}
-                                value={aiQuery}
-                                onChange={e => setAiQuery(e.target.value)}
-                            ></textarea>
-                            <button 
-                                onClick={handleAiSubmit} 
-                                disabled={aiLoading || !aiQuery.trim()}
-                                style={{marginTop:'8px',width:'100%',background:'#7c3aed',color:'#fff',fontWeight:'bold',padding:'8px',borderRadius:'6px',border:'none',cursor:(aiLoading || !aiQuery.trim())?'not-allowed':'pointer',opacity:(aiLoading || !aiQuery.trim())?0.5:1}}
-                            >
-                                {aiLoading ? 'AI 產生中...' : '產生建議回覆'}
-                            </button>
-                        </div>
-                        
-                        {(aiLoading || aiResponse) && (
-                            <div style={{flex:1,display:'flex',flexDirection:'column',background:'#fff',padding:'12px',borderRadius:'8px',border:'1px solid #e2e8f0',boxShadow:'0 1px 3px rgba(0,0,0,0.05)'}}>
-                                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
-                                    <p style={{fontSize:13,fontWeight:600,color:'#374151',display:'flex',alignItems:'center',gap:'6px'}}>
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" width="16" height="16"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                                        AI 建議回覆
-                                    </p>
-                                    {aiResponse && !isAiEditing && (
-                                        <div style={{display:'flex',gap:'6px'}}>
-                                            <button onClick={() => setIsAiEditing(true)} style={{fontSize:'11px',background:'#f3f4f6',color:'#4b5563',padding:'4px 8px',borderRadius:'4px',border:'none',cursor:'pointer'}}>編輯</button>
-                                            <button onClick={() => { navigator.clipboard.writeText(aiResponse); alert('已複製建議回覆！'); }} style={{fontSize:'11px',background:'#ede9fe',color:'#6d28d9',padding:'4px 8px',borderRadius:'4px',border:'none',cursor:'pointer'}}>複製</button>
-                                        </div>
-                                    )}
-                                    {isAiEditing && (
-                                        <button onClick={() => setIsAiEditing(false)} style={{fontSize:'11px',background:'#dcfce3',color:'#166534',padding:'4px 8px',borderRadius:'4px',border:'none',cursor:'pointer'}}>完成編輯</button>
-                                    )}
-                                </div>
-                                
-                                {aiLoading ? (
-                                    <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#9ca3af',gap:'10px'}}>
-                                        <div style={{width:'30px',height:'30px',border:'3px solid #ede9fe',borderTopColor:'#7c3aed',borderRadius:'50%',animation:'spin 1s linear infinite'}}></div>
-                                        <p style={{fontSize:'12px'}}>AI 正在思考中...</p>
-                                        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-                                    </div>
-                                ) : (
-                                    <div style={{flex:1,display:'flex',flexDirection:'column'}}>
-                                        {isAiEditing ? (
-                                            <textarea 
-                                                style={{flex:1,width:'100%',padding:'10px',border:'1px solid #c4b5fd',borderRadius:'6px',fontSize:'13px',outline:'none',resize:'none',minHeight:'150px'}}
-                                                value={aiResponse}
-                                                onChange={e => setAiResponse(e.target.value)}
-                                            ></textarea>
-                                        ) : (
-                                            <div style={{flex:1,fontSize:'13px',color:'#4b5563',whiteSpace:'pre-wrap',lineHeight:'1.6',padding:'10px',background:'#f9fafb',borderRadius:'6px',border:'1px solid #f3f4f6',minHeight:'150px',overflowY:'auto'}}>
-                                                {aiResponse}
-                                            </div>
-                                        )}
-                                        {aiResponse && !isAiEditing && (
-                                            <button onClick={() => {
-                                                setAiOpen(false);
-                                                openModal();
-                                                setFormData(prev => ({...prev, detail: aiQuery, content_v1: aiResponse}));
-                                            }} style={{marginTop:'10px',width:'100%',background:'#eff6ff',color:'#2563eb',border:'1px solid #bfdbfe',fontWeight:'bold',padding:'8px',borderRadius:'6px',cursor:'pointer',fontSize:'12px'}}>
-                                                建立為常見問題
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
                 {/* ── Smart Match Panel ── */}
                 <div id="smart-panel" className={smartOpen?'open':''}>
                     <div className="panel-header" style={{background:'#064e3b'}}>
@@ -1148,61 +730,21 @@
                         </span>
                         <button className="panel-close" onClick={closePanel}>✕</button>
                     </div>
-                    <div style={{padding:'12px 14px',borderBottom:'1px solid #e2e8f0',overflowY:'auto',maxHeight:'55vh'}}>
+                    <div style={{padding:'12px 14px',borderBottom:'1px solid #e2e8f0'}}>
                         <p style={{fontSize:12,color:'#64748b',marginBottom:8}}>貼上用戶訊息，自動找出最相關的問答：</p>
                         <textarea
                             ref={smartRef}
-                            rows={3}
+                            rows={4}
                             placeholder="例：我的點數怎麼沒有入帳？我已經回收了很多次了..."
-                            style={{width:'100%',padding:'10px 12px',borderRadius:10,border:'1.5px solid #d1fae5',fontSize:13,resize:'none',outline:'none',fontFamily:'inherit',background:'#f0fdf4',boxSizing:'border-box'}}
+                            style={{width:'100%',padding:'10px 12px',borderRadius:10,border:'1.5px solid #d1fae5',fontSize:13,resize:'vertical',outline:'none',fontFamily:'inherit',background:'#f0fdf4',boxSizing:'border-box'}}
                             value={smartQuery}
                             onChange={(e)=>runSmartMatch(e.target.value)}
                             onFocus={(e)=>e.target.style.borderColor='#059669'}
                             onBlur={(e)=>e.target.style.borderColor='#d1fae5'}
                         />
                         {smartQuery && (
-                            <button onClick={()=>{setSmartQuery('');setSmartResults([]);}} style={{marginTop:4,fontSize:11,color:'#94a3b8',background:'none',border:'none',cursor:'pointer',padding:0}}>✕ 清除</button>
+                            <button onClick={()=>{setSmartQuery('');setSmartResults([]);}} style={{marginTop:6,fontSize:11,color:'#94a3b8',background:'none',border:'none',cursor:'pointer',padding:0}}>✕ 清除</button>
                         )}
-
-                        {/* 欄位1：上傳檔案 */}
-                        <div style={{marginTop:10,padding:'8px 10px',background:'#fffbeb',borderRadius:8,border:'1px solid #fde68a'}}>
-                            <p style={{fontSize:11,color:'#92400e',fontWeight:600,marginBottom:5}}>📂 上傳檔案（Excel / CSV）</p>
-                            <label style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',padding:'5px 8px',borderRadius:6,border:'1.5px dashed #fcd34d',background:'#fff',fontSize:11,color:'#78350f'}}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                {fileLabel || '點擊選擇檔案或拖曳至此處...'}
-                                <input type="file" accept=".csv,.xls,.xlsx,.tsv" style={{display:'none'}} onChange={(e)=>loadFile(e.target.files[0])} />
-                            </label>
-                            {fileData.length>0 && (
-                                <div style={{marginTop:4,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                                    <p style={{fontSize:10,color:'#059669'}}>✅ 已載入 {fileData.length} 筆</p>
-                                    <button onClick={()=>{setFileData([]);setFileLabel('');}} style={{fontSize:10,color:'#ef4444',background:'none',border:'none',cursor:'pointer',padding:0}}>移除</button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* 欄位2：Google Sheet URL */}
-                        <div style={{marginTop:8,padding:'8px 10px',background:'#f0fdf4',borderRadius:8,border:'1px solid #d1fae5'}}>
-                            <p style={{fontSize:11,color:'#065f46',fontWeight:600,marginBottom:5}}>🌐 Google Sheet excel 網址</p>
-                            <div style={{display:'flex',gap:4}}>
-                                <input
-                                    type="text"
-                                    placeholder="貼上公開的 Google Sheet excel 網址 (CSV格式)..."
-                                    style={{flex:1,padding:'5px 8px',borderRadius:6,border:'1px solid #bbf7d0',fontSize:11,outline:'none',background:'#fff',boxSizing:'border-box'}}
-                                    value={gsUrl}
-                                    onChange={(e)=>setGsUrl(e.target.value)}
-                                    onKeyDown={(e)=>{ if(e.key==='Enter') loadGsData(gsUrl); }}
-                                />
-                                <button onClick={()=>loadGsData(gsUrl)} disabled={gsLoading} style={{padding:'5px 10px',borderRadius:6,background:'#059669',color:'#fff',border:'none',fontSize:11,cursor:'pointer',whiteSpace:'nowrap'}}>
-                                    {gsLoading?'載入中...':'載入'}
-                                </button>
-                            </div>
-                            {gsData.length>0 && (
-                                <div style={{marginTop:4,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                                    <p style={{fontSize:10,color:'#16a34a'}}>✅ 已載入 {gsData.length} 筆 Sheet 資料</p>
-                                    <button onClick={()=>{setGsData([]);setGsUrl('');localStorage.removeItem('ecoco_gs_url');}} style={{fontSize:10,color:'#ef4444',background:'none',border:'none',cursor:'pointer',padding:0}}>移除</button>
-                                </div>
-                            )}
-                        </div>
                     </div>
                     <div style={{flex:1,overflowY:'auto',padding:'12px 14px'}}>
                         {!smartQuery.trim() ? (
@@ -1210,88 +752,135 @@
                                 <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" style={{margin:'0 auto 10px',display:'block'}}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
                                 輸入用戶說的話，<br/>系統自動找最相關問答
                             </div>
-                        ) : (() => {
-                            const qClean = smartQuery.replace(/https?:\/\/[^\s]+/g, '').toLowerCase();
-                            const words = qClean.split(/[\s，。！？、\n]+/).filter(Boolean);
-                            const hasKb = smartResults.length > 0;
-                            
-                            const getMatches = (data) => {
-                                if (words.length === 0) return [];
-                                return data.map(row => {
-                                    let score = 0;
-                                    const values = Object.values(row).map(v => String(v||'').toLowerCase());
-                                    words.forEach(w => { if (values.some(v => v.includes(w))) score += 1; });
-                                    return {row, score};
-                                }).filter(x => x.score > 0).sort((a,b) => b.score - a.score).slice(0, 5).map(x => x.row);
-                            };
-                            
-                            const fileResults = getMatches(fileData);
-                            const gsResults = getMatches(gsData);
-                            const hasAny = hasKb || fileResults.length>0 || gsResults.length>0;
-                            if (!hasAny) return (
-                                <div style={{textAlign:'center',padding:'30px 16px',color:'#94a3b8',fontSize:12}}>
-                                    <p>找不到相符的問答</p>
-                                    <p style={{fontSize:11,marginTop:4}}>試試不同的關鍵字</p>
-                                </div>
-                            );
-                            return (
-                                <>
-                                    {/* 知識庫結果 */}
-                                    {hasKb && (
-                                        <>
-                                            <p style={{fontSize:11,color:'#059669',fontWeight:600,marginBottom:6}}>📚 知識庫: {smartResults.length} 筆</p>
-                                            {smartResults.map(({faq,score})=>(
-                                                <div key={faq.id} className="match-card">
-                                                    <span className="match-score">相關度 {Math.min(100,score*10)}%</span>
-                                                    <div className="match-title">{faq.detail || faq.theme}</div>
-                                                    <div style={{fontSize:11,color:'#94a3b8',marginBottom:4}}>{[faq.theme,faq.main_item,faq.sub_item].filter(Boolean).join(' › ')}</div>
-                                                    <div className="match-preview">{faq.content_v1||'（尚無內容）'}</div>
-                                                    <div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>
-                                                        <button className="match-copy-btn" onClick={()=>copyToClipboard(faq.content_v1,faq.id,faq.detail||faq.theme)}>複製 V1</button>
-                                                        {faq.content_v2 && <button className="match-copy-btn" onClick={()=>copyToClipboard(faq.content_v2,faq.id,faq.detail||faq.theme)}>複製 V2</button>}
-                                                        <button className="match-copy-btn" style={{borderColor:'#c7d2fe',background:'#f5f3ff',color:'#3730a3'}} onClick={()=>scrollToFaq(faq.id)}>跳至卡片</button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </>
-                                    )}
-                                    {/* 檔案結果 */}
-                                    {fileResults.length>0 && (() => {
-                                        const cols = Object.keys(fileResults[0]);
-                                        return (
-                                            <>
-                                                <p style={{fontSize:11,color:'#d97706',fontWeight:600,marginBottom:6,marginTop:hasKb?14:0}}>📂 檔案結果: {fileResults.length} 筆</p>
-                                                {fileResults.map((row,i)=>(
-                                                    <div key={i} className="official-result" style={{borderColor:'#fde68a',background:'#fffbeb'}}>
-                                                        <div className="official-q" style={{color:'#92400e'}}>{row[cols[0]]||'—'}</div>
-                                                        <div className="official-a">{cols.slice(1).map(c=>row[c]).filter(Boolean).join(' | ')}</div>
-                                                        <button className="official-copy-btn" style={{borderColor:'#fde68a',background:'#fffbeb',color:'#92400e'}} onClick={()=>navigator.clipboard.writeText(Object.values(row).filter(Boolean).join('\n')).then(()=>alert('已複製'))}>複製內容</button>
-                                                    </div>
-                                                ))}
-                                            </>
-                                        );
-                                    })()}
-                                    {/* Google Sheet 結果 */}
-                                    {gsResults.length>0 && (() => {
-                                        const cols = Object.keys(gsResults[0]);
-                                        return (
-                                            <>
-                                                <p style={{fontSize:11,color:'#065f46',fontWeight:600,marginBottom:6,marginTop:(hasKb||fileResults.length>0)?14:0}}>🌐 Google Sheet: {gsResults.length} 筆</p>
-                                                {gsResults.map((row,i)=>(
-                                                    <div key={i} className="official-result">
-                                                        <div className="official-q">{row[cols[0]]||'—'}</div>
-                                                        <div className="official-a">{cols.slice(1).map(c=>row[c]).filter(Boolean).join(' | ')}</div>
-                                                        <button className="official-copy-btn" onClick={()=>navigator.clipboard.writeText(Object.values(row).filter(Boolean).join('\n')).then(()=>alert('已複製'))}>複製內容</button>
-                                                    </div>
-                                                ))}
-                                            </>
-                                        );
-                                    })()}
-                                </>
-                            );
-                        })()}
+                        ) : smartResults.length === 0 ? (
+                            <div style={{textAlign:'center',padding:'30px 16px',color:'#94a3b8',fontSize:12}}>
+                                <p>找不到相符的問答</p>
+                                <p style={{fontSize:11,marginTop:4}}>試試不同的關鍵字</p>
+                            </div>
+                        ) : (
+                            <>
+                                <p style={{fontSize:11,color:'#94a3b8',marginBottom:10}}>找到 {smartResults.length} 筆相關結果</p>
+                                {smartResults.map(({faq,score})=>(
+                                    <div key={faq.id} className="match-card">
+                                        <span className="match-score">相關度 {Math.min(100,score*10)}%</span>
+                                        <div className="match-title">{faq.detail || faq.theme}</div>
+                                        <div style={{fontSize:11,color:'#94a3b8',marginBottom:4}}>
+                                            {[faq.theme,faq.main_item,faq.sub_item].filter(Boolean).join(' › ')}
+                                        </div>
+                                        <div className="match-preview">{faq.content_v1||'（尚無內容）'}</div>
+                                        <div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>
+                                            <button className="match-copy-btn" onClick={()=>copyToClipboard(faq.content_v1,faq.id,faq.detail||faq.theme)}>
+                                                複製 V1 標準回覆
+                                            </button>
+                                            {faq.content_v2 && (
+                                                <button className="match-copy-btn" onClick={()=>copyToClipboard(faq.content_v2,faq.id,faq.detail||faq.theme)}>
+                                                    複製 V2
+                                                </button>
+                                            )}
+                                            <button className="match-copy-btn" style={{borderColor:'#c7d2fe',background:'#f5f3ff',color:'#3730a3'}} onClick={()=>scrollToFaq(faq.id)}>
+                                                跳至卡片
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </>
+                        )}
                     </div>
                 </div>
+
+                {/* ── Scroll to Top ── */}
+                {showTop && (
+                    <button onClick={scrollToTop} style={{position:'fixed',bottom:28,right:28,zIndex:300,width:48,height:48,borderRadius:'50%',background:'#060E9F',color:'#fff',border:'none',cursor:'pointer',boxShadow:'0 4px 16px rgba(6,14,159,0.35)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,transition:'all 0.2s'}}
+                        title="回到頂部" onMouseEnter={e=>e.currentTarget.style.background='#FF5000'} onMouseLeave={e=>e.currentTarget.style.background='#060E9F'}>
+                        <i className="fas fa-chevron-up"></i>
+                    </button>
+                )}
+
+                {/* ── Import Modal ── */}
+                {importOpen && (
+                    <div style={{position:'fixed',inset:0,zIndex:500,display:'flex',alignItems:'center',justifyContent:'center',padding:16,background:'rgba(6,14,159,0.18)',backdropFilter:'blur(4px)'}}>
+                        <div style={{background:'#fff',borderRadius:24,width:'100%',maxWidth:680,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+                            {/* Header */}
+                            <div style={{background:'#060E9F',borderRadius:'24px 24px 0 0',padding:'18px 24px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                                <div style={{color:'#fff',fontWeight:700,fontSize:16,display:'flex',alignItems:'center',gap:10}}>
+                                    <i className="fas fa-file-import"></i> Excel / CSV 批次匯入
+                                </div>
+                                <button onClick={()=>setImportOpen(false)} style={{background:'rgba(255,255,255,0.15)',border:'none',color:'#fff',width:30,height:30,borderRadius:8,cursor:'pointer',fontSize:16}}>✕</button>
+                            </div>
+
+                            <div style={{padding:'20px 24px'}}>
+                                {/* Step 1: Download template */}
+                                <div style={{background:'#f0f4ff',borderRadius:12,padding:'12px 16px',marginBottom:16,display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
+                                    <div>
+                                        <div style={{fontWeight:600,fontSize:13,color:'#3730a3',marginBottom:3}}>第一步：下載範本</div>
+                                        <div style={{fontSize:12,color:'#6366f1'}}>使用標準欄位格式，避免匯入錯誤</div>
+                                    </div>
+                                    <button onClick={downloadTemplate} style={{background:'#060E9F',color:'#fff',border:'none',borderRadius:8,padding:'8px 16px',fontSize:12,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:6}}>
+                                        <i className="fas fa-download"></i> 下載範本
+                                    </button>
+                                </div>
+
+                                {/* Step 2: Upload file */}
+                                <div style={{marginBottom:16}}>
+                                    <div style={{fontWeight:600,fontSize:13,color:'#1e293b',marginBottom:8}}>第二步：上傳 CSV 檔案</div>
+                                    <div style={{border:'2px dashed #c7d2fe',borderRadius:12,padding:'20px',textAlign:'center',background:'#f8faff',cursor:'pointer'}}
+                                        onClick={()=>importFileRef.current&&importFileRef.current.click()}>
+                                        <i className="fas fa-cloud-upload-alt" style={{fontSize:28,color:'#818cf8',marginBottom:8,display:'block'}}></i>
+                                        <div style={{fontSize:13,color:'#6366f1',fontWeight:600}}>點擊選擇 CSV 檔案</div>
+                                        <div style={{fontSize:11,color:'#94a3b8',marginTop:4}}>支援 .csv 格式（Excel 另存為 CSV 即可）</div>
+                                        <input ref={importFileRef} type="file" accept=".csv,.tsv,.txt" style={{display:'none'}} onChange={handleImportFile} />
+                                    </div>
+                                </div>
+
+                                {/* Preview */}
+                                {importPreview.length > 0 && !importResult && (
+                                    <div style={{marginBottom:16}}>
+                                        <div style={{fontWeight:600,fontSize:13,color:'#1e293b',marginBottom:8,display:'flex',alignItems:'center',gap:8}}>
+                                            第三步：確認資料預覽
+                                            <span style={{background:'#d1fae5',color:'#065f46',fontSize:11,padding:'2px 8px',borderRadius:999,fontWeight:700}}>{importPreview.length} 筆</span>
+                                        </div>
+                                        <div style={{maxHeight:260,overflowY:'auto',border:'1px solid #e2e8f0',borderRadius:10}}>
+                                            <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                                                <thead>
+                                                    <tr style={{background:'#f8fafc',position:'sticky',top:0}}>
+                                                        {['主題','主項目','小項目','細項','V1 標準回覆','V2 備用'].map(h=>(
+                                                            <th key={h} style={{padding:'8px 10px',textAlign:'left',fontWeight:700,color:'#475569',borderBottom:'1px solid #e2e8f0',whiteSpace:'nowrap'}}>{h}</th>
+                                                        ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {importPreview.map((row,i)=>(
+                                                        <tr key={i} style={{borderBottom:'1px solid #f1f5f9',background:i%2===0?'#fff':'#f8fafc'}}>
+                                                            {[row.theme,row.main_item,row.sub_item,row.detail,row.content_v1,row.content_v2].map((v,j)=>(
+                                                                <td key={j} style={{padding:'7px 10px',color:'#334155',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={v}>{v||'-'}</td>
+                                                            ))}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div style={{display:'flex',gap:10,marginTop:12,justifyContent:'flex-end'}}>
+                                            <button onClick={()=>setImportPreview([])} style={{padding:'9px 20px',borderRadius:10,border:'1.5px solid #e2e8f0',background:'#fff',color:'#64748b',fontSize:13,fontWeight:600,cursor:'pointer'}}>重新選擇</button>
+                                            <button onClick={handleImportSubmit} disabled={importLoading} style={{padding:'9px 24px',borderRadius:10,border:'none',background:'#060E9F',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
+                                                {importLoading ? <><i className="fas fa-spinner fa-spin"></i> 匯入中...</> : <><i className="fas fa-check"></i> 確認匯入 {importPreview.length} 筆</>}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Result */}
+                                {importResult && (
+                                    <div style={{background: importResult.failed===0?'#f0fdf4':'#fffbeb',border:`1.5px solid ${importResult.failed===0?'#bbf7d0':'#fde68a'}`,borderRadius:12,padding:'16px 20px',textAlign:'center'}}>
+                                        <i className={`fas ${importResult.failed===0?'fa-check-circle':'fa-exclamation-circle'}`} style={{fontSize:28,color:importResult.failed===0?'#22c55e':'#f59e0b',marginBottom:8,display:'block'}}></i>
+                                        <div style={{fontWeight:700,fontSize:15,color:'#1e293b',marginBottom:4}}>匯入完成！</div>
+                                        <div style={{fontSize:13,color:'#475569'}}>成功：<strong style={{color:'#22c55e'}}>{importResult.success} 筆</strong>　失敗：<strong style={{color:'#ef4444'}}>{importResult.failed} 筆</strong></div>
+                                        <button onClick={()=>setImportOpen(false)} style={{marginTop:14,padding:'9px 28px',borderRadius:10,border:'none',background:'#060E9F',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}}>關閉</button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
             </div>
         );
