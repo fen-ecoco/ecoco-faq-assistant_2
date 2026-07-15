@@ -164,8 +164,18 @@
         const [fileData, setFileData] = useState([]);
         const [fileLabel, setFileLabel] = useState('');
         const smartRef = useRef(null);
+        const importFileRef = useRef(null);
         const [pendingScrollId, setPendingScrollId] = useState(null);
         const [activeSuggestionField, setActiveSuggestionField] = useState(null);
+
+        // TOP button
+        const [showTop, setShowTop] = useState(false);
+
+        // Import modal
+        const [importOpen, setImportOpen] = useState(false);
+        const [importPreview, setImportPreview] = useState([]);
+        const [importLoading, setImportLoading] = useState(false);
+        const [importResult, setImportResult] = useState(null);
 
         const [aiOpen, setAiOpen] = useState(false);
         const [aiQuery, setAiQuery] = useState('');
@@ -220,6 +230,13 @@
                 setPendingScrollId(null);
             }
         }, [pendingScrollId, faqs, sidebarMode, searchTerm]);
+
+        // Scroll to top visibility
+        useEffect(() => {
+            const onScroll = () => setShowTop(window.scrollY > 300);
+            window.addEventListener('scroll', onScroll);
+            return () => window.removeEventListener('scroll', onScroll);
+        }, []);
 
         const checkConnection = async () => { try { const r = await fetch(`${API_URL}/faqs`); setConnected(r.ok); } catch { setConnected(false); } };
         const fetchFaqs = async () => { setLoading(true); try { const r = await fetch(`${API_URL}/faqs`); if (r.ok) { const d = await r.json(); setFaqs(Array.isArray(d)?d:[]); setSelectedIds(new Set()); } } catch(e){} finally { setLoading(false); } };
@@ -319,6 +336,82 @@
         const copyRowForSheet = (faq) => {
             const row = [faq.theme||'',faq.main_item||'',faq.sub_item||'',faq.detail||'',faq.content_v1||'',faq.content_v2||'',faq.created_date||''].join('\t');
             navigator.clipboard.writeText(row); alert('已複製整列資料 (適用於 Google Sheet 貼上)');
+        };
+
+        // ── Import functions ──
+        const downloadTemplate = () => {
+            const csv = '\uFEFF' + '主題,主項目,小項目,細項,標準回覆(V1),備用英文(V2)\n' +
+                '"APP2.0","登入與帳號","繁體版","無法收到簡訊驗證碼","親愛的會員您好，若未收到驗證碼請確認手機是否封鎖行銷簡訊。","Dear member, please check if your phone blocks marketing SMS."\n';
+            const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url;
+            a.download = 'ECOCO_FAQ_匯入範本.csv'; a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        const handleImportFile = (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const text = ev.target.result;
+                    const lines = text.split(/\r?\n/).filter(l => l.trim());
+                    if (lines.length < 2) { alert('檔案內容不足，至少需要標題列和一筆資料'); return; }
+                    const sep = lines[0].includes('\t') ? '\t' : ',';
+                    const parseRow = (line) => {
+                        if (sep === '\t') return line.split('\t').map(v => v.trim());
+                        const result = []; let cur = ''; let inQ = false;
+                        for (let i = 0; i < line.length; i++) {
+                            if (line[i] === '"') { inQ = !inQ; }
+                            else if (line[i] === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+                            else { cur += line[i]; }
+                        }
+                        result.push(cur.trim()); return result;
+                    };
+                    const headers = parseRow(lines[0]);
+                    const colMap = {};
+                    const colNames = {
+                        theme: ['主題','theme','Theme'],
+                        main_item: ['主項目','項目','main_item','Main Item'],
+                        sub_item: ['小項目','版本','sub_item','Sub Item'],
+                        detail: ['細項','問題','detail','Detail'],
+                        content_v1: ['標準回覆','內容版本1','V1','content_v1','Content V1'],
+                        content_v2: ['備用英文','內容版本2','V2','content_v2','Content V2'],
+                    };
+                    headers.forEach((h, i) => {
+                        Object.entries(colNames).forEach(([key, names]) => {
+                            if (names.some(n => h.includes(n))) colMap[key] = i;
+                        });
+                    });
+                    if (colMap.theme === undefined) { alert('找不到「主題」欄位，請確認第一列有欄位名稱'); return; }
+                    const rows = lines.slice(1).map(line => {
+                        const cols = parseRow(line);
+                        return {
+                            theme: cols[colMap.theme] || '',
+                            main_item: colMap.main_item !== undefined ? cols[colMap.main_item] || '' : '',
+                            sub_item: colMap.sub_item !== undefined ? cols[colMap.sub_item] || '' : '',
+                            detail: colMap.detail !== undefined ? cols[colMap.detail] || '' : '',
+                            content_v1: colMap.content_v1 !== undefined ? cols[colMap.content_v1] || '' : '',
+                            content_v2: colMap.content_v2 !== undefined ? cols[colMap.content_v2] || '' : '',
+                        };
+                    }).filter(r => r.theme);
+                    setImportPreview(rows); setImportResult(null);
+                } catch { alert('解析失敗，請確認檔案格式正確'); }
+            };
+            reader.readAsText(file, 'UTF-8'); e.target.value = '';
+        };
+
+        const handleImportSubmit = async () => {
+            if (!importPreview.length) return;
+            setImportLoading(true); let success = 0; let failed = 0;
+            for (const row of importPreview) {
+                try {
+                    const r = await fetch(`${API_URL}/faqs`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(row) });
+                    if (r.ok) success++; else failed++;
+                } catch { failed++; }
+            }
+            setImportLoading(false); setImportResult({ success, failed });
+            if (success > 0) fetchFaqs();
         };
 
         const exportCSV = () => {
@@ -643,6 +736,10 @@
                                 <button onClick={()=>{checkConnection();fetchFaqs();}} className="bg-white text-ecoco-deepBlue p-4 rounded-2xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-all flex items-center justify-center" title="重新整理連線">
                                     <i className={`fas fa-sync-alt ${loading?'animate-spin':''}`}></i>
                                 </button>
+                                <button onClick={()=>{setImportOpen(true);setImportPreview([]);setImportResult(null);}} className="bg-white text-ecoco-deepBlue px-4 py-4 rounded-2xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-all flex items-center space-x-2 whitespace-nowrap" title="批次匯入">
+                                    <i className="fas fa-file-import text-ecoco-deepBlue"></i><span className="hidden md:inline text-sm font-bold">匯入</span>
+                                </button>
+                                <input ref={importFileRef} type="file" accept=".csv,.tsv,.txt" style={{display:'none'}} onChange={handleImportFile} />
                                 <button onClick={exportCSV} className="bg-white text-ecoco-deepBlue px-4 py-4 rounded-2xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-all flex items-center space-x-2 whitespace-nowrap" title="匯出 CSV">
                                     <i className="fas fa-file-csv text-green-600"></i><span className="hidden md:inline text-sm font-bold">CSV</span>
                                 </button>
@@ -1293,12 +1390,108 @@
                     </div>
                 </div>
 
+            {/* ── Import Modal ── */}
+            {importOpen && (
+                <div style={{position:'fixed',inset:0,zIndex:500,display:'flex',alignItems:'center',justifyContent:'center',padding:16,background:'rgba(6,14,159,0.18)',backdropFilter:'blur(4px)'}}>
+                    <div style={{background:'#fff',borderRadius:24,width:'100%',maxWidth:680,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+                        <div style={{background:'#060E9F',borderRadius:'24px 24px 0 0',padding:'18px 24px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                            <div style={{color:'#fff',fontWeight:700,fontSize:16,display:'flex',alignItems:'center',gap:10}}>
+                                <i className="fas fa-file-import"></i> Excel / CSV 批次匯入
+                            </div>
+                            <button onClick={()=>setImportOpen(false)} style={{background:'rgba(255,255,255,0.15)',border:'none',color:'#fff',width:30,height:30,borderRadius:8,cursor:'pointer',fontSize:16}}>✕</button>
+                        </div>
+                        <div style={{padding:'20px 24px'}}>
+                            {/* Step 1 */}
+                            <div style={{background:'#f0f4ff',borderRadius:12,padding:'12px 16px',marginBottom:16,display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
+                                <div>
+                                    <div style={{fontWeight:600,fontSize:13,color:'#3730a3',marginBottom:3}}>第一步：下載範本</div>
+                                    <div style={{fontSize:12,color:'#6366f1'}}>使用標準欄位格式，避免匯入錯誤</div>
+                                </div>
+                                <button onClick={downloadTemplate} style={{background:'#060E9F',color:'#fff',border:'none',borderRadius:8,padding:'8px 16px',fontSize:12,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
+                                    <i className="fas fa-download"></i> 下載範本
+                                </button>
+                            </div>
+                            {/* Step 2 */}
+                            <div style={{marginBottom:16}}>
+                                <div style={{fontWeight:600,fontSize:13,color:'#1e293b',marginBottom:8}}>第二步：上傳 CSV 檔案</div>
+                                <div style={{border:'2px dashed #c7d2fe',borderRadius:12,padding:'20px',textAlign:'center',background:'#f8faff',cursor:'pointer'}}
+                                    onClick={()=>importFileRef.current&&importFileRef.current.click()}>
+                                    <i className="fas fa-cloud-upload-alt" style={{fontSize:28,color:'#818cf8',marginBottom:8,display:'block'}}></i>
+                                    <div style={{fontSize:13,color:'#6366f1',fontWeight:600}}>點擊選擇 CSV 檔案</div>
+                                    <div style={{fontSize:11,color:'#94a3b8',marginTop:4}}>支援 .csv 格式（Excel 另存為 CSV UTF-8 即可）</div>
+                                </div>
+                            </div>
+                            {/* Step 3: Preview */}
+                            {importPreview.length > 0 && !importResult && (
+                                <div style={{marginBottom:16}}>
+                                    <div style={{fontWeight:600,fontSize:13,color:'#1e293b',marginBottom:8,display:'flex',alignItems:'center',gap:8}}>
+                                        第三步：確認資料預覽
+                                        <span style={{background:'#d1fae5',color:'#065f46',fontSize:11,padding:'2px 8px',borderRadius:999,fontWeight:700}}>{importPreview.length} 筆</span>
+                                    </div>
+                                    <div style={{maxHeight:240,overflowY:'auto',border:'1px solid #e2e8f0',borderRadius:10}}>
+                                        <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                                            <thead>
+                                                <tr style={{background:'#f8fafc',position:'sticky',top:0}}>
+                                                    {['主題','主項目','小項目','細項','V1 標準回覆','V2 備用'].map(h=>(
+                                                        <th key={h} style={{padding:'8px 10px',textAlign:'left',fontWeight:700,color:'#475569',borderBottom:'1px solid #e2e8f0',whiteSpace:'nowrap'}}>{h}</th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {importPreview.map((row,i)=>(
+                                                    <tr key={i} style={{borderBottom:'1px solid #f1f5f9',background:i%2===0?'#fff':'#f8fafc'}}>
+                                                        {[row.theme,row.main_item,row.sub_item,row.detail,row.content_v1,row.content_v2].map((v,j)=>(
+                                                            <td key={j} style={{padding:'7px 10px',color:'#334155',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={v}>{v||'-'}</td>
+                                                        ))}
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div style={{display:'flex',gap:10,marginTop:12,justifyContent:'flex-end'}}>
+                                        <button onClick={()=>setImportPreview([])} style={{padding:'9px 20px',borderRadius:10,border:'1.5px solid #e2e8f0',background:'#fff',color:'#64748b',fontSize:13,fontWeight:600,cursor:'pointer'}}>重新選擇</button>
+                                        <button onClick={handleImportSubmit} disabled={importLoading} style={{padding:'9px 24px',borderRadius:10,border:'none',background:'#060E9F',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
+                                            {importLoading ? <><i className="fas fa-spinner fa-spin"></i> 匯入中...</> : <><i className="fas fa-check"></i> 確認匯入 {importPreview.length} 筆</>}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                            {/* Result */}
+                            {importResult && (
+                                <div style={{background:importResult.failed===0?'#f0fdf4':'#fffbeb',border:`1.5px solid ${importResult.failed===0?'#bbf7d0':'#fde68a'}`,borderRadius:12,padding:'16px 20px',textAlign:'center'}}>
+                                    <i className={`fas ${importResult.failed===0?'fa-check-circle':'fa-exclamation-circle'}`} style={{fontSize:28,color:importResult.failed===0?'#22c55e':'#f59e0b',marginBottom:8,display:'block'}}></i>
+                                    <div style={{fontWeight:700,fontSize:15,color:'#1e293b',marginBottom:4}}>匯入完成！</div>
+                                    <div style={{fontSize:13,color:'#475569'}}>成功：<strong style={{color:'#22c55e'}}>{importResult.success} 筆</strong>　失敗：<strong style={{color:'#ef4444'}}>{importResult.failed} 筆</strong></div>
+                                    <button onClick={()=>setImportOpen(false)} style={{marginTop:14,padding:'9px 28px',borderRadius:10,border:'none',background:'#060E9F',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}}>關閉</button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Scroll to Top ── */}
+            {showTop && (
+                <button
+                    onClick={()=>window.scrollTo({top:0,behavior:'smooth'})}
+                    style={{position:'fixed',bottom:28,right:28,zIndex:300,width:48,height:48,borderRadius:'50%',background:'#060E9F',color:'#fff',border:'none',cursor:'pointer',boxShadow:'0 4px 16px rgba(6,14,159,0.35)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,transition:'background 0.2s'}}
+                    title="回到頂部"
+                    onMouseEnter={e=>e.currentTarget.style.background='#FF5000'}
+                    onMouseLeave={e=>e.currentTarget.style.background='#060E9F'}
+                >
+                    <i className="fas fa-chevron-up"></i>
+                </button>
+            )}
+
             </div>
         );
     }
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
+
+    // ── Import Modal & TOP button (rendered outside React via portal) ──
+    // These are rendered inside App's return, injected via the state above.
 </script>
 </body>
 </html>
