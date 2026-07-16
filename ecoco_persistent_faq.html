@@ -153,6 +153,7 @@
         // Sidebar
         const [sidebarMode, setSidebarMode] = useState('all');
         const [activeChip, setActiveChip] = useState(null);
+        const [chipExpanded, setChipExpanded] = useState(false);
         const [hotOpen, setHotOpen] = useState(false);
         const [smartOpen, setSmartOpen] = useState(false);
         const [copyCounts, setCopyCounts] = useState(getCopyCounts());
@@ -170,6 +171,10 @@
 
         // TOP button
         const [showTop, setShowTop] = useState(false);
+
+        // Pagination
+        const [pageSize, setPageSize] = useState(10);
+        const [currentPage, setCurrentPage] = useState(1);
 
         // Import modal
         const [importOpen, setImportOpen] = useState(false);
@@ -563,6 +568,17 @@
             return result;
         }, [faqs, searchTerm, activeChip, sidebarMode]);
 
+        // Pagination
+        const totalPages = Math.max(1, Math.ceil(filteredFaqs.length / pageSize));
+        const safePage = Math.min(currentPage, totalPages);
+        const pagedFaqs = useMemo(() => {
+            const start = (safePage - 1) * pageSize;
+            return filteredFaqs.slice(start, start + pageSize);
+        }, [filteredFaqs, safePage, pageSize]);
+
+        // Reset to page 1 when filter/search changes
+        useEffect(() => { setCurrentPage(1); }, [searchTerm, activeChip, sidebarMode, pageSize]);
+
         // Hot list
         const hotList = useMemo(() => Object.entries(copyCounts).map(([id,v])=>({id,label:v.label,count:v.count})).sort((a,b)=>b.count-a.count), [copyCounts]);
 
@@ -575,7 +591,7 @@
         };
 
         const setSidebarNav = (mode) => {
-            setSidebarMode(mode); setActiveChip(null);
+            setSidebarMode(mode); setActiveChip(null); setChipExpanded(false);
             setHotOpen(false); setSmartOpen(false); setAiOpen(false);
         };
         const toggleHot = () => { setSmartOpen(false); setAiOpen(false); setHotOpen(v=>!v); };
@@ -723,12 +739,26 @@
 
                     {/* Chip bar — appears when theme/item/version selected */}
                     {chipOptions.length > 0 && (
-                        <div id="chip-bar" className="visible">
-                            <div className={`chip ${activeChip===null?'chip-active':''}`} onClick={()=>setActiveChip(null)}>
-                                全部 <span className="chip-count">{faqs.length}</span>
+                        <div style={{borderBottom:'1px solid #e0e7ff',background:'#f8faff',padding:'8px 20px',display:'flex',flexWrap:'wrap',alignItems:'center',gap:8}}>
+                            {/* 收合切換按鈕 */}
+                            <div
+                                className={`chip ${activeChip===null?'chip-active':''}`}
+                                style={{userSelect:'none'}}
+                                onClick={()=>setChipExpanded(v=>!v)}
+                            >
+                                {modeLabel[sidebarMode]||'全部'} <span className="chip-count">{faqs.length}</span>
+                                <span style={{marginLeft:4,fontSize:10,opacity:.7}}>{chipExpanded?'▲':'▼'}</span>
                             </div>
-                            {chipOptions.map(({val,cnt})=>(
-                                <div key={val} className={`chip ${activeChip===val?'chip-active':''}`} onClick={()=>setActiveChip(activeChip===val?null:val)}>
+                            {/* 選中的 chip 收合時仍顯示 */}
+                            {!chipExpanded && activeChip && (
+                                <div className="chip chip-active" onClick={()=>setActiveChip(null)}>
+                                    {activeChip} <span className="chip-count">{chipOptions.find(c=>c.val===activeChip)?.cnt||''}</span>
+                                    <span style={{marginLeft:4,fontSize:11}}>✕</span>
+                                </div>
+                            )}
+                            {/* 展開時顯示所有 chips */}
+                            {chipExpanded && chipOptions.map(({val,cnt})=>(
+                                <div key={val} className={`chip ${activeChip===val?'chip-active':''}`} onClick={()=>{setActiveChip(activeChip===val?null:val);}}>
                                     {val} <span className="chip-count">{cnt}</span>
                                 </div>
                             ))}
@@ -853,8 +883,9 @@
                                 <p className="text-ecoco-deepBlue font-medium animate-pulse">載入資料中...</p>
                             </div>
                         ) : filteredFaqs.length > 0 ? (
+                            <>
                             <div className="space-y-8">
-                                {filteredFaqs.map(faq => {
+                                {pagedFaqs.map(faq => {
                                     const isArchived = faq.is_archived === 1;
                                     return (
                                     <div key={faq.id} id={`faq-${faq.id}`} className={`bg-white rounded-2xl shadow-sm border-l-4 overflow-hidden flex flex-col animate-fade-in group ${isArchived ? 'border-l-[#999EA2] bg-[#f8f9fa] border border-gray-200' : 'border-l-ecoco-deepBlue border border-gray-100'}`}>
@@ -987,6 +1018,53 @@
                                     );
                                 })}
                             </div>
+                            {/* ── 分頁列 ── */}
+                            {totalPages > 0 && (
+                                <div style={{display:'flex',alignItems:'center',gap:10,marginTop:28,flexWrap:'wrap',justifyContent:'center'}}>
+                                    {/* 總筆數 + 每頁筆數 */}
+                                    <span style={{fontSize:13,color:'#64748b',whiteSpace:'nowrap'}}>共 {filteredFaqs.length} 項</span>
+                                    <select
+                                        value={pageSize}
+                                        onChange={e=>{setPageSize(Number(e.target.value));setCurrentPage(1);}}
+                                        style={{fontSize:13,padding:'4px 8px',borderRadius:8,border:'1px solid #e2e8f0',background:'#fff',color:'#334155',cursor:'pointer',outline:'none'}}
+                                    >
+                                        {[1,10,20,30,40,50,100].map(n=><option key={n} value={n}>{n} 筆/頁</option>)}
+                                    </select>
+                                    {/* 頁碼導覽 */}
+                                    <div style={{display:'flex',alignItems:'center',gap:4}}>
+                                        {/* 上一頁 */}
+                                        <button
+                                            onClick={()=>setCurrentPage(p=>Math.max(1,p-1))}
+                                            disabled={safePage===1}
+                                            style={{width:32,height:32,borderRadius:8,border:'1px solid #e2e8f0',background:safePage===1?'#f8fafc':'#fff',color:safePage===1?'#cbd5e1':'#334155',cursor:safePage===1?'not-allowed':'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center'}}
+                                        >‹</button>
+                                        {/* 頁碼按鈕 */}
+                                        {(() => {
+                                            const pages = [];
+                                            const delta = 2;
+                                            const left = Math.max(1, safePage - delta);
+                                            const right = Math.min(totalPages, safePage + delta);
+                                            if (left > 1) { pages.push(1); if (left > 2) pages.push('...'); }
+                                            for (let i = left; i <= right; i++) pages.push(i);
+                                            if (right < totalPages) { if (right < totalPages - 1) pages.push('...'); pages.push(totalPages); }
+                                            return pages.map((p, i) => p === '...' ? (
+                                                <span key={`dot${i}`} style={{width:32,textAlign:'center',color:'#94a3b8',fontSize:13}}>…</span>
+                                            ) : (
+                                                <button key={p} onClick={()=>setCurrentPage(p)}
+                                                    style={{width:32,height:32,borderRadius:8,border:'1px solid',borderColor:p===safePage?'#060E9F':'#e2e8f0',background:p===safePage?'#060E9F':'#fff',color:p===safePage?'#fff':'#334155',cursor:'pointer',fontSize:13,fontWeight:p===safePage?700:400,display:'flex',alignItems:'center',justifyContent:'center'}}
+                                                >{p}</button>
+                                            ));
+                                        })()}
+                                        {/* 下一頁 */}
+                                        <button
+                                            onClick={()=>setCurrentPage(p=>Math.min(totalPages,p+1))}
+                                            disabled={safePage===totalPages}
+                                            style={{width:32,height:32,borderRadius:8,border:'1px solid #e2e8f0',background:safePage===totalPages?'#f8fafc':'#fff',color:safePage===totalPages?'#cbd5e1':'#334155',cursor:safePage===totalPages?'not-allowed':'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center'}}
+                                        >›</button>
+                                    </div>
+                                </div>
+                            )}
+                            </>
                         ) : (
                             <div className="text-center py-20 bg-white/50 rounded-[3rem] border-4 border-dashed border-ecoco-beige flex flex-col items-center">
                                 <div className="w-24 h-24 bg-ecoco-beige/30 rounded-full flex items-center justify-center text-ecoco-beige text-5xl mb-6"><i className="fas fa-cloud-sun"></i></div>
