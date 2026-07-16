@@ -359,20 +359,48 @@
             reader.onload = (ev) => {
                 try {
                     const text = ev.target.result;
-                    const lines = text.split(/\r?\n/).filter(l => l.trim());
-                    if (lines.length < 2) { alert('檔案內容不足，至少需要標題列和一筆資料'); return; }
-                    const sep = lines[0].includes('\t') ? '\t' : ',';
-                    const parseRow = (line) => {
-                        if (sep === '\t') return line.split('\t').map(v => v.trim());
-                        const result = []; let cur = ''; let inQ = false;
-                        for (let i = 0; i < line.length; i++) {
-                            if (line[i] === '"') { inQ = !inQ; }
-                            else if (line[i] === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
-                            else { cur += line[i]; }
+
+                    // ── 正確的 CSV 解析器：支援引號內含換行（多行儲存格）──
+                    const parseCSV = (raw) => {
+                        const rows = [];
+                        let row = [];
+                        let cur = '';
+                        let inQ = false;
+                        for (let i = 0; i < raw.length; i++) {
+                            const ch = raw[i];
+                            const next = raw[i + 1];
+                            if (ch === '"') {
+                                if (inQ && next === '"') { cur += '"'; i++; } // 跳脫引號 ""
+                                else { inQ = !inQ; }
+                            } else if (ch === ',' && !inQ) {
+                                row.push(cur); cur = '';
+                            } else if ((ch === '\r' || ch === '\n') && !inQ) {
+                                if (ch === '\r' && next === '\n') i++; // 跳過 \r\n 的 \n
+                                row.push(cur); cur = '';
+                                if (row.some(v => v.trim())) rows.push(row);
+                                row = [];
+                            } else {
+                                cur += ch;
+                            }
                         }
-                        result.push(cur.trim()); return result;
+                        // 最後一列
+                        row.push(cur);
+                        if (row.some(v => v.trim())) rows.push(row);
+                        return rows;
                     };
-                    const headers = parseRow(lines[0]);
+
+                    // TSV 格式（Tab 分隔）另外處理
+                    const firstLine = text.split(/\r?\n/)[0];
+                    let allRows;
+                    if (firstLine.includes('\t')) {
+                        allRows = text.split(/\r?\n/).filter(l => l.trim()).map(l => l.split('\t'));
+                    } else {
+                        allRows = parseCSV(text);
+                    }
+
+                    if (allRows.length < 2) { alert('檔案內容不足，至少需要標題列和一筆資料'); return; }
+
+                    const headers = allRows[0].map(h => h.trim());
                     const colMap = {};
                     const colNames = {
                         theme: ['主題','theme','Theme'],
@@ -388,19 +416,18 @@
                         });
                     });
                     if (colMap.theme === undefined) { alert('找不到「主題」欄位，請確認第一列有欄位名稱'); return; }
-                    const rows = lines.slice(1).map(line => {
-                        const cols = parseRow(line);
-                        return {
-                            theme: cols[colMap.theme] || '',
-                            main_item: colMap.main_item !== undefined ? cols[colMap.main_item] || '' : '',
-                            sub_item: colMap.sub_item !== undefined ? cols[colMap.sub_item] || '' : '',
-                            detail: colMap.detail !== undefined ? cols[colMap.detail] || '' : '',
-                            content_v1: colMap.content_v1 !== undefined ? cols[colMap.content_v1] || '' : '',
-                            content_v2: colMap.content_v2 !== undefined ? cols[colMap.content_v2] || '' : '',
-                        };
-                    }).filter(r => r.theme);
+
+                    const rows = allRows.slice(1).map(cols => ({
+                        theme: (cols[colMap.theme] || '').trim(),
+                        main_item: colMap.main_item !== undefined ? (cols[colMap.main_item] || '').trim() : '',
+                        sub_item: colMap.sub_item !== undefined ? (cols[colMap.sub_item] || '').trim() : '',
+                        detail: colMap.detail !== undefined ? (cols[colMap.detail] || '').trim() : '',
+                        content_v1: colMap.content_v1 !== undefined ? (cols[colMap.content_v1] || '') : '',
+                        content_v2: colMap.content_v2 !== undefined ? (cols[colMap.content_v2] || '') : '',
+                    })).filter(r => r.theme);
+
                     setImportPreview(rows); setImportResult(null);
-                } catch { alert('解析失敗，請確認檔案格式正確'); }
+                } catch (err) { alert('解析失敗，請確認檔案格式正確'); }
             };
             reader.readAsText(file, 'UTF-8'); e.target.value = '';
         };
