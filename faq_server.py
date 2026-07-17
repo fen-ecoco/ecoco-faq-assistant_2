@@ -105,14 +105,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ★ 修正：使用相對路徑，本機和 Render 都能正確讀取
+# ??修正：使?�相對路徑�??��???Render ?�能�?��讀??
 HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ecoco_persistent_faq.html")
 
 @app.get("/", include_in_schema=False)
 async def read_index():
     if os.path.exists(HTML_PATH):
         return FileResponse(HTML_PATH)
-    return HTMLResponse("<h2>找不到前端檔案，請確認 ecoco_persistent_faq.html 在同一個資料夾內</h2>", status_code=404)
+    return HTMLResponse("<h2>?��??��?端�?案�?請確�?ecoco_persistent_faq.html ?��?一?��??�夾??/h2>", status_code=404)
 
 class FAQ(BaseModel):
     id: Optional[int] = None
@@ -239,26 +239,26 @@ class AIChatRequest(BaseModel):
 async def ai_chat(req: AIChatRequest):
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=400, detail="未設定 GEMINI_API_KEY。請在環境變數中加入您的 Gemini API 密鑰。")
+        raise HTTPException(status_code=400, detail="?�設�?GEMINI_API_KEY?��??�環境�??�中?�入?��? Gemini API 密鑰??)
     
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
         
         prompt = f"""
-你是一位專業的 ECOCO (點數回饋平台) 客服助手。
-你的職責是基於 ECOCO 的官方網站(https://www.ecoco.network/)、官方粉絲團以及公開資訊，提供準確且有禮貌的客服回覆。
-請直接以客服的口吻回覆，內容應該幫助解決用戶的問題，並避免給出未經證實的承諾。
-如果問題超出 ECOCO 的範圍，請委婉告知。
+你是一位�?業�? ECOCO (點數?��?平台) 客�??��???
+你�??�責?�基??ECOCO ?��??�網�?https://www.ecoco.network/)?��??��?絲�?以�??��?資�?，�?供�?確�??�禮貌�?客�??��???
+請直?�以客�??�口?��?覆�??�容?�該幫助�?��?�戶?��?題�?並避?�給?�未經�?實�??�諾??
+如�??��?超出 ECOCO ?��??��?請�?婉�??��?
 
-用戶的問題是：「{req.query}」
+?�戶?��?題是：「{req.query}??
 """
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(prompt)
         return {"response": response.text}
     except Exception as e:
         logger.error(f"AI Error: {e}")
-        raise HTTPException(status_code=500, detail=f"AI 生成失敗: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"AI ?��?失�?: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
