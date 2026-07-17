@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import sqlite3
 import logging
@@ -105,14 +106,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ??ä¿®æ­£ï¼šä½¿?¨ç›¸å°è·¯å¾‘ï??¬æ???Render ?½èƒ½æ­?¢ºè®€??
+# ??ä¿®æ­£ï¼šä½¿? ç›¸å°è·¯å¾‘ ??  ???Render ? èƒ½ ?  è®€??
 HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ecoco_persistent_faq.html")
 
 @app.get("/", include_in_schema=False)
 async def read_index():
     if os.path.exists(HTML_PATH):
         return FileResponse(HTML_PATH)
-    return HTMLResponse("<h2>?¾ä??°å?ç«¯æ?æ¡ˆï?è«‹ç¢ºèª?ecoco_persistent_faq.html ?¨å?ä¸€?‹è??™å¤¾??/h2>", status_code=404)
+    return HTMLResponse("<h2>?  ??  ?ç«¯ ?æ¡ˆ ?è«‹ç¢º ?ecoco_persistent_faq.html ?  ?ä¸€?  ?? å¤¾??/h2>", status_code=404)
 
 class FAQ(BaseModel):
     id: Optional[int] = None
@@ -239,26 +240,26 @@ class AIChatRequest(BaseModel):
 async def ai_chat(req: AIChatRequest):
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=400, detail="?ªè¨­å®?GEMINI_API_KEY?‚è??¨ç’°å¢ƒè??¸ä¸­? å…¥?¨ç? Gemini API å¯†é‘°??)
+        raise HTTPException(status_code=400, detail="? è¨­ ?GEMINI_API_KEY?  ?? ç’°å¢ƒ ?? ä¸­? å…¥?  ? Gemini API å¯†é‘°??)
     
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
         
         prompt = f"""
-ä½ æ˜¯ä¸€ä½å?æ¥­ç? ECOCO (é»æ•¸?é?å¹³å°) å®¢æ??©æ???
-ä½ ç??·è²¬?¯åŸº??ECOCO ?„å??¹ç¶²ç«?https://www.ecoco.network/)?å??¹ç?çµ²å?ä»¥å??¬é?è³‡è?ï¼Œæ?ä¾›æ?ç¢ºä??‰ç¦®è²Œç?å®¢æ??è???
-è«‹ç›´?¥ä»¥å®¢æ??„å£?»å?è¦†ï??§å®¹?‰è©²å¹«åŠ©è§?±º?¨æˆ¶?„å?é¡Œï?ä¸¦é¿?çµ¦?ºæœªç¶“è?å¯¦ç??¿è«¾??
-å¦‚æ??é?è¶…å‡º ECOCO ?„ç??ï?è«‹å?å©‰å??¥ã€?
+ä½ æ˜¯ä¸€ä½ ?æ¥­ ? ECOCO (é»æ•¸?  ?å¹³å°) å®¢ ??  ???
+ä½  ?? è²¬? åŸº??ECOCO ?  ?? ç¶² ?https://www.ecoco.network/)?  ??  ?çµ² ?ä»¥ ??  ?è³‡ ?ï¼Œ ?ä¾› ?ç¢º ?? ç¦®è²Œ ?å®¢ ??  ???
+è«‹ç›´? ä»¥å®¢ ?? å£?  ?è¦† ?? å®¹? è©²å¹«åŠ© ?  ? æˆ¶?  ?é¡Œ ?ä¸¦é¿? çµ¦? æœªç¶“ ?å¯¦ ?? è«¾??
+å¦‚ ??  ?è¶…å‡º ECOCO ?  ??  ?è«‹ ?å©‰ ??  ?
 
-?¨æˆ¶?„å?é¡Œæ˜¯ï¼šã€Œ{req.query}??
+? æˆ¶?  ?é¡Œæ˜¯ï¼šã€Œ{req.query}??
 """
         model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(prompt)
         return {"response": response.text}
     except Exception as e:
         logger.error(f"AI Error: {e}")
-        raise HTTPException(status_code=500, detail=f"AI ?Ÿæ?å¤±æ?: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"AI ?  ?å¤± ?: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
