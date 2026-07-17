@@ -240,7 +240,7 @@ class AIChatRequest(BaseModel):
 async def ai_chat(req: AIChatRequest):
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=400, detail="? 設 ?GEMINI_API_KEY?  ?? 環境 ?? 中? 入?  ? Gemini API 密鑰??)
+        raise HTTPException(status_code=400, detail="GEMINI_API_KEY not set. Please add it to environment variables.")
     
     try:
         import google.generativeai as genai
