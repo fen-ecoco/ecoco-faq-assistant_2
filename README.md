@@ -1,13 +1,12 @@
 # ECOCO FAQ Assistant 2.0
 
-ECOCO 內部常見問題集管理系統，提供簡易的本地端介面，用於管理和編輯客服常用問答 (FAQ)。
+ECOCO 內部常見問題集管理系統，提供簡易的本地端與雲端介面，用於管理和編輯客服常用問答 (FAQ)。
 
 ---
 
 ## 🌐 線上版本
 
 **雲端網址：** https://ecoco-faq-assistant-2.onrender.com
-
 > 免費方案長時間未使用會進入休眠，首次載入可能需等待 30～60 秒。
 
 ---
@@ -20,23 +19,27 @@ ECOCO 內部常見問題集管理系統，提供簡易的本地端介面，用�
 - ✅ V1 標準回覆 + V2 備用英文 雙版本管理
 - ✅ 一鍵複製回覆內容
 - ✅ 複製整列資料（Google Sheet 格式）
+- ✅ 建立日 / 更新日 自動記錄
 
 ### 側邊欄導覽
 - 📋 **全部** — 顯示所有 FAQ
-- 🔍 **主題 / 項目 / 版本** — 點選後顯示快速篩選按鈕（Chips）
+- 🔍 **主題 / 項目 / 版本** — 點選後顯示可收合的快速篩選按鈕（Chips）
 - 🤖 **智能比對** — 貼上用戶訊息，自動找出最相關問答
-- 🔥 **熱門** — 依複製次數自動排行，點擊跳至對應卡片
+- 🔥 **熱門** — 依複製次數自動排行
+- 🤖 **AI 客服** — 輸入用戶問題，由 Gemini AI 生成建議回覆
+- 📦 **封存區** — 封存不常用問答，隨時可解封存
 
 ### 匯出 / 匯入功能
 | 按鈕 | 說明 |
 |------|------|
-| 📥 **匯入** | 上傳 CSV 批次新增 FAQ |
+| 📥 **匯入** | 上傳 CSV 批次新增 FAQ（支援儲存格內換行） |
 | 📄 **CSV** | 匯出所有 FAQ 為 CSV 檔案 |
 | 📊 **Excel** | 匯出所有 FAQ 為 XLS 檔案 |
 | 📕 **PDF** | 匯出為排版好的 PDF（含 ECOCO 品牌樣式） |
 
 ### 其他
 - ⬆️ **TOP 置頂鍵** — 頁面右下角，捲動超過 300px 自動出現
+- 📑 **分頁功能** — 支援 1 / 10 / 50 / 100 / 500 / 1000 筆/頁
 - 🔄 **雲端同步** — 使用 `sync_from_render.py` 將雲端資料同步至本機
 
 ---
@@ -46,12 +49,14 @@ ECOCO 內部常見問題集管理系統，提供簡易的本地端介面，用�
 ```
 ecoco-faq-assistant_2/
 ├── ecoco_persistent_faq.html   # 前端主頁面（React + Tailwind）
-├── faq_server.py               # FastAPI 後端（支援 PostgreSQL）
+├── faq_server.py               # FastAPI 後端（支援 SQLite 本機 / PostgreSQL 雲端）
 ├── requirements.txt            # Python 套件清單
-├── render.yaml                 # Render 部署設定
+├── render.yaml                 # Render 雲端部署設定
 ├── init_data.py                # 初始資料匯入腳本
+├── migrate_to_render.py        # 本機 → 雲端資料搬移腳本
 ├── sync_from_render.py         # 雲端 → 本機同步腳本
 ├── 啟動ECOCO知識庫.bat         # 本機一鍵啟動（Windows）
+├── .gitignore                  # 排除敏感檔案與暫存檔
 └── README.md
 ```
 
@@ -59,20 +64,45 @@ ecoco-faq-assistant_2/
 
 ## ⚙️ 本機啟動方式
 
+### 快速啟動
+直接執行：
+```
+啟動ECOCO知識庫.bat
+```
+會自動安裝套件、清除佔用的 Port 7777、啟動伺服器並開啟瀏覽器。
+
+### 手動啟動
 ```bash
 pip install -r requirements.txt
 python faq_server.py
 ```
 瀏覽器開啟：http://127.0.0.1:7777
 
+### AI 客服功能（本機）
+需設定 Gemini API 金鑰（永久設定）：
+```powershell
+[System.Environment]::SetEnvironmentVariable("GEMINI_API_KEY", "你的API金鑰", "User")
+```
+金鑰取得：https://aistudio.google.com/app/apikey
+
 ---
 
 ## ☁️ 雲端部署（Render + Supabase）
 
-### 環境變數
+### Render 環境變數
 | Key | Value |
 |-----|-------|
 | `DATABASE_URL` | Supabase PostgreSQL Connection Pooler URI（port 6543） |
+| `GEMINI_API_KEY` | Google Gemini API 金鑰 |
+
+---
+
+## 🔒 安全性注意事項
+
+- **API Key 絕對不要上傳 GitHub** — 已加入 `.gitignore` 排除 `.env` 檔案
+- 本機資料庫 `ecoco_faq.db` 已加入 `.gitignore`，不會上傳
+- Log 檔 `server_debug.log` 已加入 `.gitignore`
+- 若不小心上傳了敏感資訊，請立即至 Google AI Studio 重新產生 API Key
 
 ---
 
@@ -90,14 +120,14 @@ python sync_from_render.py --reset
 
 ## 📋 CSV 匯入欄位格式
 
-| 欄位 | 必填 |
-|------|------|
-| 主題 | ✅ |
-| 主項目 | |
-| 小項目 | |
-| 細項 | |
-| 標準回覆(V1) | |
-| 備用英文(V2) | |
+| 欄位 | 必填 | 說明 |
+|------|------|------|
+| 主題 | ✅ | FAQ 主分類 |
+| 主項目 | | 次分類 |
+| 小項目 | | 版本或細分類 |
+| 細項 | | 用戶問題描述 |
+| 標準回覆(V1) | | 官方標準回覆（支援儲存格內換行） |
+| 備用英文(V2) | | 英文版或備用語句 |
 
 ---
 
@@ -116,34 +146,18 @@ python sync_from_render.py --reset
 
 ## 📝 更新紀錄
 
-### v2.3 (2026/07)
-- 優化快速篩選 Chips 列：改為預設收合狀態，僅顯示單一藍色按鈕（例如：「主題 172 ▼」）
-- 調整 Chips 展開/收合機制：點擊藍色按鈕展開所有分類 chips（按鈕變更為 ▲），再次點擊則收合回去
-- 新增 Chip 選取清除功能：若有選中的 chip，將於藍色按鈕旁額外顯示該選項並附帶「✕」圖標以供快速清除
-- 新增卡片清單下方分頁列：
-  - 左側：顯示目前篩選後的總筆數（例如：「共 641 項」）
-  - 中間：每頁筆數下拉選單調整為 1 / 10 / 50 / 100 / 500 / 1000 筆/頁，預設維持 10 筆
-  - 右側：頁碼導覽機制，當頁數過多時自動以「…」省略中間頁碼
-- 優化分頁自動重置邏輯：切換搜尋、篩選條件或更改每頁筆數時，系統會自動跳回第 1 頁
-- 升級 AI 客服後端模型：因 `gemini-1.5-flash` 已過期，於 `faq_server.py` 中將模型名稱更新為 `gemini-2.0-flash`
-- 修正後端套件缺失錯誤：解決「No module named 'google'」之報錯，確認為後端缺少套件而非環境變數問題，已於 `requirements.txt` 中補上 `google-generativeai` 依賴
-
-### v2.2（2026/07）
-- 優化右下角 TOP 置頂鍵：頁面下捲超過 300px 自動顯示深藍色圓形按鈕，支援平滑回頂，滑鼠懸停變更為橘色
-- 新增 Excel 批次匯入功能（搜尋列旁「匯入」按鈕）：支援標準三步驟（下載範本 → 上傳 CSV → 預覽確認後批次新增）
-- 批次匯入規格優化：支援主題、主項目、小項目、細項、V1、V2 共六欄位，相容 Excel 另存之「CSV UTF-8」格式
-- 前端新增更新日期功能：配合後端 `faq_server.py` 的 `modified_date` 欄位，前端新增顯示更新日，並於送出資料時自動帶入當天日期
-
-### v2.1（2026/03）
-- 升級 AI 客服為後端真實呼叫大語言模型架構（擺脫前端靜態模擬）
-- 後端新增 `POST /api/ai_chat` 專屬端點，正式串接 `google-generativeai` 套件
-- 導入 `gemini-1.5-flash` 模型，並注入 ECOCO 點數回饋平台專業客服 Prompt 提示詞
-- 前端全面串接後端 API，支援動態產生建議回覆、新增讀取中動畫
-- 強化前端錯誤處理，當未設定 API Key 或連線失敗時顯示明確的 ❌ 錯誤提示
-- `requirements.txt` 新增依賴套件，確保 Render 雲端部署自動安裝
+### v2.5（2026/07）
+- 新增 AI 客服功能（Gemini 2.5 Flash）
+- 修正 faq_server.py UTF-8 編碼宣告問題
+- 新增 .gitignore 防止敏感資訊上傳
+- 啟動腳本新增自動開啟瀏覽器、自動清除佔用 Port、自動安裝 google-generativeai
+- 新增分頁功能（1 / 10 / 50 / 100 / 500 / 1000 筆/頁）
+- Chip 篩選列改為收合式設計
+- 新增建立日 / 更新日顯示
+- 修正 CSV 多行儲存格匯入解析問題
 
 ### v2.0（2026/03）
-- 新增左側導覽欄（全部／主題／項目／版本／智能比對／熱門）
+- 新增左側導覽欄（全部／主題／項目／版本／智能比對／熱門／封存區）
 - 新增快速篩選 Chips
 - 新增智能比對功能
 - 新增熱門問題排行（依複製次數自動排列）
@@ -151,7 +165,6 @@ python sync_from_render.py --reset
 - 新增 Excel / CSV 批次匯入
 - 新增右下角 TOP 置頂鍵
 - 後端改用 PostgreSQL（Supabase）永久儲存
-- API_URL 改為 `window.location.origin`，雲端直接可用
 - 新增雲端同步腳本 `sync_from_render.py`
 
 ### v1.0（2026/03）
