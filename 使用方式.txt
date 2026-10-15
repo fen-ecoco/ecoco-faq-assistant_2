@@ -1,0 +1,93 @@
+2026/10/15  雲端清空、本機資料庫同步上傳
+
+
+第一步：確認本機伺服器已啟動
+
+啟動ECOCO知識庫.bat
+
+第二步：開新的 PowerShell 視窗執行同步腳本
+
+powershell
+cd "C:\Users\fen\.gemini\antigravity\skills\ecoco-faq-assistant"
+python push_local_to_render.py
+
+第三步：看到提示後輸入 y 確認
+
+⚠️  此操作將清空雲端所有資料並以本機取代，確定繼續？(輸入 y 確認)：y
+
+腳本會自動：
+
+讀取本機 SQLite 全部資料
+連線雲端逐筆刪除舊資料
+把本機資料全部推送上去
+顯示成功／失敗筆數
+
+
+
+2026/10/15 完整解法，封存狀態永久保存且可同步
+
+✅ 修改完成 — 封存同步問題完整解法
+
+① faq_server.py（後端核心修改）
+
+CREATE TABLE 加入 is_archived INTEGER DEFAULT 0
+新增 ALTER TABLE ... ADD COLUMN — 若現有資料庫缺少此欄位，首次重啟時自動補上（不需手動改資料庫）
+FAQ 資料模型加入 is_archived: Optional[int] = 0
+POST /faqs（新增）與 PUT /faqs/{id}（更新）都納入 is_archived 欄位
+
+② ecoco_persistent_faq.html（前端原本就正確）
+
+已確認前端的 handleArchive() 本來就是呼叫 PUT /faqs/{id} API，不是 localStorage
+問題根源是後端 DB schema 沒有這個欄位，現在已修復
+
+③ push_local_to_render.py（同步腳本）
+
+payload 加入 "is_archived": faq.get("is_archived") or 0
+之後本機 → 雲端同步時，封存狀態也會一併保留
+
+
+⚠️ 注意前提
+
+條件	說明
+本機伺服器需先啟動	執行 啟動ECOCO知識庫.bat
+需在專案資料夾內執行	cd C:\Users\fen\.gemini\antigravity\skills\ecoco-faq-assistant
+會完全覆蓋雲端資料	執行前會再次確認，輸入 y 才會繼續
+
+cd C:\Users\fen\.gemini\antigravity\skills\ecoco-faq-assistant
+python push_local_to_render.py
+
+
+
+
+2026/10/15 修復網頁開不起來
+
+問題原因： 上次修改時把 SQLite 本機備用模式整個移除了，只剩 PostgreSQL，所以本機沒有設 DATABASE_URL 就會連線失敗。
+
+修復內容： 新版 faq_server.py 加回自動判斷：
+
+環境	資料庫
+本機（無 DATABASE_URL）	SQLite（ecoco_faq.db）
+雲端 Render（有 DATABASE_URL）	PostgreSQL（Supabase）
+
+步驟：
+
+下載上方 faq_server.py，覆蓋專案資料夾內的同名檔案
+重新執行 啟動ECOCO知識庫.bat
+確認本機正常後，git push 推到 GitHub，Render 也會自動重新部署
+
+
+
+
+2026/10/15 修改bat
+
+1. 重新執行本機伺服器
+
+cd "C:\Users\fen\.gemini\antigravity\skills\ecoco-faq-assistant"
+.\啟動ECOCO知識庫.bat
+
+2. Git add → commit → push
+
+cd "C:\Users\fen\.gemini\antigravity\skills\ecoco-faq-assistant"
+git add faq_server.py 啟動ECOCO知識庫.bat
+git commit -m "fix: 修復本機SQLite備用模式、uvicorn啟動指令"
+git push

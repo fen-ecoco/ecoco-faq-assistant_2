@@ -1,0 +1,38 @@
+# ── 資料庫 ──
+ecoco_faq.db
+*.db
+*.sqlite
+*.sqlite3
+
+# ── 環境變數 / 敏感資訊 ──
+.env
+.env.*
+*.pem
+*.key
+secrets.txt
+
+# ── 伺服器 Log ──
+server_debug.log
+*.log
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# ── 系統檔案 ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── 暫存匯入檔案 ──
+ECOCO_FAQ_*.csv
+ECOCO_FAQ_*.xlsx
