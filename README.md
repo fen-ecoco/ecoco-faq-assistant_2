@@ -27,7 +27,7 @@ ECOCO 內部常見問題集管理系統，提供簡易的本地端與雲端介�
 - 🤖 **智能比對** — 貼上用戶訊息，自動找出最相關問答
 - 🔥 **熱門** — 依複製次數自動排行
 - 🤖 **AI 客服** — 輸入用戶問題，由 Gemini AI 生成建議回覆
-- 📦 **封存區** — 封存不常用問答，隨時可解封存
+- 📦 **封存區** — 封存不常用問答，隨時可解封存（封存狀態永久儲存於資料庫）
 
 ### 匯出 / 匯入功能
 | 按鈕 | 說明 |
@@ -47,13 +47,14 @@ ECOCO 內部常見問題集管理系統，提供簡易的本地端與雲端介�
 ## 🗂️ 專案結構
 
 ```
-ecoco-faq-assistant_2/
+D:\info\ecoco-faq-assistant\
 ├── ecoco_persistent_faq.html   # 前端主頁面（React + Tailwind）
 ├── faq_server.py               # FastAPI 後端（支援 SQLite 本機 / PostgreSQL 雲端）
 ├── requirements.txt            # Python 套件清單
 ├── render.yaml                 # Render 雲端部署設定
 ├── init_data.py                # 初始資料匯入腳本
 ├── migrate_to_render.py        # 本機 → 雲端資料搬移腳本
+├── push_local_to_render.py     # 本機 → 雲端完整覆蓋同步腳本
 ├── sync_from_render.py         # 雲端 → 本機同步腳本
 ├── 啟動ECOCO知識庫.bat         # 本機一鍵啟動（Windows）
 ├── .gitignore                  # 排除敏感檔案與暫存檔
@@ -64,17 +65,17 @@ ecoco-faq-assistant_2/
 
 ## ⚙️ 本機啟動方式
 
-### 快速啟動
-直接執行：
-```
-啟動ECOCO知識庫.bat
+### 快速啟動（PowerShell）
+```powershell
+cd "D:\info\ecoco-faq-assistant"
+.\啟動ECOCO知識庫.bat
 ```
 會自動安裝套件、清除佔用的 Port 7777、啟動伺服器並開啟瀏覽器。
 
 ### 手動啟動
-```bash
-pip install -r requirements.txt
-python faq_server.py
+```powershell
+cd "D:\info\ecoco-faq-assistant"
+python -m uvicorn faq_server:app --host 127.0.0.1 --port 7777
 ```
 瀏覽器開啟：http://127.0.0.1:7777
 
@@ -108,12 +109,16 @@ python faq_server.py
 
 ## 🔄 資料同步
 
-```bash
-# 同步雲端新資料到本機（保留本機既有資料）
+```powershell
+# 雲端 → 本機（保留本機既有資料）
+cd "D:\info\ecoco-faq-assistant"
 python sync_from_render.py
 
-# 完全用雲端資料取代本機
+# 雲端 → 本機（完全取代）
 python sync_from_render.py --reset
+
+# 本機 → 雲端（完整覆蓋，含封存狀態）
+python push_local_to_render.py
 ```
 
 ---
@@ -145,6 +150,12 @@ python sync_from_render.py --reset
 ---
 
 ## 📝 更新紀錄
+
+### v2.6（2026/10）
+- 修復封存狀態改為資料庫永久儲存（`is_archived` 欄位），同步本機與雲端不再遺失
+- 修復本機 SQLite 備用模式（無 `DATABASE_URL` 時自動切換）
+- 修正 `.bat` 啟動腳本改用 `uvicorn` 正確啟動伺服器
+- 專案路徑遷移至 `D:\info\ecoco-faq-assistant`
 
 ### v2.5（2026/07）
 - 新增 AI 客服功能（Gemini 2.5 Flash）
