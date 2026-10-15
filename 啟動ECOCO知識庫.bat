@@ -56,7 +56,7 @@ echo.
 start /b cmd /c "timeout /t 3 >nul && start "" http://127.0.0.1:7777/"
 
 :: Execute server
-%PY_CMD% faq_server.py --host 127.0.0.1 --port 7777
+%PY_CMD% -m uvicorn faq_server:app --host 127.0.0.1 --port 7777
 
 if %errorlevel% neq 0 (
     echo.

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import logging
 from fastapi import FastAPI, HTTPException
@@ -6,55 +7,92 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
-import psycopg2
-from psycopg2.extras import RealDictCursor
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler()
-    ]
+    handlers=[logging.StreamHandler()]
 )
 logger = logging.getLogger(__name__)
 
-# ── 資料庫連線 ──
-# 優先使用環境變數 DATABASE_URL（Render 雲端）
-# 若不存在則使用本機 SQLite 模式（local fallback）
+# ── 資料庫模式判斷 ──
+# 有 DATABASE_URL → PostgreSQL（Render 雲端）
+# 無 DATABASE_URL → SQLite（本機）
 DATABASE_URL = os.environ.get("DATABASE_URL")
+USE_POSTGRES = bool(DATABASE_URL)
+
+if USE_POSTGRES:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+    logger.info("Mode: PostgreSQL (cloud)")
+else:
+    import sqlite3
+    DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ecoco_faq.db")
+    logger.info(f"Mode: SQLite (local) → {DB_PATH}")
+
 
 def get_conn():
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    if USE_POSTGRES:
+        return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    else:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn
+
 
 def init_db():
     conn = get_conn()
     cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS faqs (
-            id SERIAL PRIMARY KEY,
-            theme TEXT NOT NULL,
-            main_item TEXT,
-            sub_item TEXT,
-            detail TEXT,
-            content_v1 TEXT,
-            content_v2 TEXT,
-            created_date TEXT,
-            modified_date TEXT,
-            images TEXT,
-            is_archived INTEGER DEFAULT 0
-        )
-    """)
-    # 若資料表已存在但缺少 is_archived 欄位，則自動補上
-    try:
-        cursor.execute("ALTER TABLE faqs ADD COLUMN is_archived INTEGER DEFAULT 0")
-        conn.commit()
-        logger.info("Added is_archived column to faqs table")
-    except Exception:
-        conn.rollback()  # 欄位已存在，忽略錯誤
+    if USE_POSTGRES:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS faqs (
+                id SERIAL PRIMARY KEY,
+                theme TEXT NOT NULL,
+                main_item TEXT,
+                sub_item TEXT,
+                detail TEXT,
+                content_v1 TEXT,
+                content_v2 TEXT,
+                created_date TEXT,
+                modified_date TEXT,
+                images TEXT,
+                is_archived INTEGER DEFAULT 0
+            )
+        """)
+        # 若舊資料表缺少 is_archived 欄位，自動補上
+        try:
+            cursor.execute("ALTER TABLE faqs ADD COLUMN is_archived INTEGER DEFAULT 0")
+            conn.commit()
+            logger.info("Added is_archived column (PostgreSQL)")
+        except Exception:
+            conn.rollback()
+    else:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS faqs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                theme TEXT NOT NULL,
+                main_item TEXT,
+                sub_item TEXT,
+                detail TEXT,
+                content_v1 TEXT,
+                content_v2 TEXT,
+                created_date TEXT,
+                modified_date TEXT,
+                images TEXT,
+                is_archived INTEGER DEFAULT 0
+            )
+        """)
+        # 若舊 SQLite 資料表缺少 is_archived 欄位，自動補上
+        try:
+            cursor.execute("ALTER TABLE faqs ADD COLUMN is_archived INTEGER DEFAULT 0")
+            logger.info("Added is_archived column (SQLite)")
+        except Exception:
+            pass  # 欄位已存在，忽略
     conn.commit()
     cursor.close()
     conn.close()
     logger.info("Database initialized successfully")
+
 
 init_db()
 
@@ -70,11 +108,13 @@ app.add_middleware(
 
 HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ecoco_persistent_faq.html")
 
+
 @app.get("/", include_in_schema=False)
 async def read_index():
     if os.path.exists(HTML_PATH):
         return FileResponse(HTML_PATH)
     return HTMLResponse("<h2>找不到前端檔案</h2>", status_code=404)
+
 
 class FAQ(BaseModel):
     id: Optional[int] = None
@@ -89,6 +129,11 @@ class FAQ(BaseModel):
     images: Optional[str] = None
     is_archived: Optional[int] = 0
 
+
+def placeholder(use_pg: bool) -> str:
+    return "%s" if use_pg else "?"
+
+
 @app.get("/faqs", response_model=List[FAQ])
 async def get_faqs():
     conn = get_conn()
@@ -99,32 +144,47 @@ async def get_faqs():
     conn.close()
     return [dict(row) for row in rows]
 
+
 @app.post("/faqs", response_model=FAQ)
 async def create_faq(faq: FAQ):
     conn = get_conn()
     cursor = conn.cursor()
     now = datetime.now().strftime("%Y/%m/%d")
-    cursor.execute("""
-        INSERT INTO faqs (theme, main_item, sub_item, detail, content_v1, content_v2, created_date, modified_date, images, is_archived)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        RETURNING id
-    """, (faq.theme, faq.main_item, faq.sub_item, faq.detail, faq.content_v1, faq.content_v2, now, now, faq.images, faq.is_archived or 0))
-    new_id = cursor.fetchone()["id"]
+    p = placeholder(USE_POSTGRES)
+    vals = (faq.theme, faq.main_item, faq.sub_item, faq.detail,
+            faq.content_v1, faq.content_v2, now, now, faq.images, faq.is_archived or 0)
+    if USE_POSTGRES:
+        cursor.execute(f"""
+            INSERT INTO faqs (theme, main_item, sub_item, detail, content_v1, content_v2,
+                              created_date, modified_date, images, is_archived)
+            VALUES ({p},{p},{p},{p},{p},{p},{p},{p},{p},{p})
+            RETURNING id
+        """, vals)
+        new_id = cursor.fetchone()["id"]
+    else:
+        cursor.execute(f"""
+            INSERT INTO faqs (theme, main_item, sub_item, detail, content_v1, content_v2,
+                              created_date, modified_date, images, is_archived)
+            VALUES ({p},{p},{p},{p},{p},{p},{p},{p},{p},{p})
+        """, vals)
+        new_id = cursor.lastrowid
     conn.commit()
     cursor.close()
     conn.close()
     return {**faq.dict(), "id": new_id, "created_date": now, "modified_date": now}
+
 
 @app.put("/faqs/{faq_id}", response_model=FAQ)
 async def update_faq(faq_id: int, faq: FAQ):
     conn = get_conn()
     cursor = conn.cursor()
     now = datetime.now().strftime("%Y/%m/%d")
-    cursor.execute("""
+    p = placeholder(USE_POSTGRES)
+    cursor.execute(f"""
         UPDATE faqs SET
-            theme=%s, main_item=%s, sub_item=%s, detail=%s,
-            content_v1=%s, content_v2=%s, modified_date=%s, images=%s, is_archived=%s
-        WHERE id=%s
+            theme={p}, main_item={p}, sub_item={p}, detail={p},
+            content_v1={p}, content_v2={p}, modified_date={p}, images={p}, is_archived={p}
+        WHERE id={p}
     """, (faq.theme, faq.main_item, faq.sub_item, faq.detail,
           faq.content_v1, faq.content_v2, now, faq.images, faq.is_archived or 0, faq_id))
     if cursor.rowcount == 0:
@@ -136,11 +196,13 @@ async def update_faq(faq_id: int, faq: FAQ):
     conn.close()
     return {**faq.dict(), "id": faq_id, "modified_date": now}
 
+
 @app.delete("/faqs/{faq_id}")
 async def delete_faq(faq_id: int):
     conn = get_conn()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM faqs WHERE id=%s", (faq_id,))
+    p = placeholder(USE_POSTGRES)
+    cursor.execute(f"DELETE FROM faqs WHERE id={p}", (faq_id,))
     if cursor.rowcount == 0:
         cursor.close()
         conn.close()
@@ -149,3 +211,17 @@ async def delete_faq(faq_id: int):
     cursor.close()
     conn.close()
     return {"message": "FAQ deleted successfully"}
+
+
+if __name__ == "__main__":
+    import sys
+    import uvicorn
+    host = "127.0.0.1"
+    port = 7777
+    args = sys.argv[1:]
+    for i, a in enumerate(args):
+        if a == "--host" and i + 1 < len(args):
+            host = args[i + 1]
+        if a == "--port" and i + 1 < len(args):
+            port = int(args[i + 1])
+    uvicorn.run("faq_server:app", host=host, port=port, reload=False)
